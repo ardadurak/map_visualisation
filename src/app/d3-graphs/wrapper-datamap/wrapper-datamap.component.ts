@@ -11,12 +11,12 @@ export class WrapperDatamapComponent implements OnInit {
 
   @Input() startDate: Date;
   @Input() endDate: Date;
-
+  @Input() stockData: any;
 
   private defaultStartDate = new Date('2016/06/27');
   private defaultEndDate= new Date('2017/06/27');
 
-  private myDatePickerOptions: IMyDpOptions = {
+  public myDatePickerOptions: IMyDpOptions = {
       // other options...
       dateFormat: 'dd/mm/yyyy',
       disableUntil: {year: 2016, month: 6, day: 26},

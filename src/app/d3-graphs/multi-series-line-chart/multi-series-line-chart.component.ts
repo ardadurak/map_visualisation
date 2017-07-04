@@ -106,33 +106,8 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .attr("color", "#ff0000")
         .text("%");
         
-      //drawPath();
-
-      let stock = d3G.selectAll(".stock")
-        .data(processedStocks)
-        .enter().append<SVGGElement>('g')
-        .attr("fill", "none")
-        .attr("class", "stock")
-        .on("mouseover", mouseover);
-
-      stock.append('path')
-        .attr("d", (d : any) => line(d.values) )
-        .style("stroke", (d : any) => z(d.id) )
-        .attr("class", (d: any) => "line line-" + d.country_code + " line-" + d.ticker_symbol) ;
-
-        // ardadarda
-      stock.append('text')
-        .datum(function(d : any) { return {id: d.id, ticker_symbol: d.ticker_symbol, value: d.values[d.values.length - 1]}; })
-        .attr("transform", (d) => "translate(270," + (d.id * 20) + ")" )
-        .attr("x", 3)
-        .attr("dy", "0.35em")
-        .style("font", "14px sans-serif")
-        .style('class', function(d,i: any){
-            return ("graph-text-" + i + "-" + d.ticker_symbol);
-        })
-        .style("fill", (d : any) => z(d.id) )
-        .text(function(d) { return d.ticker_symbol; });
-
+      drawLines(processedStocks);
+      
       var focus = d3Svg.append("g")
           .attr("class", "focus")
           .style("display", "none");
@@ -200,14 +175,59 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
       
       let newD3Svg = d3Svg.transition();
       d3G.selectAll(".stock").remove();
-        
-      // would be better with transitions
+      drawLines(processedStocks);
+      
+      // would have been better with transitions
+      /*
+      let newd3G = d3G.selectAll(".stock").transition();
+        // Make the changes
+        newd3G.selectAll(".line")   // change the line
+            .duration(750)
+            .attr("d", (d : any) => line(d.values) )
+           .style("stroke", (d : any) => z(d.id) );
+          */
+
+        newD3Svg.select(".axis--x") // change the x axis
+            .duration(750)
+            .call(xAxis);
+
+        newD3Svg.select(".axis--y") // change the y axis
+            .duration(750)
+            .call(yAxis);
+    }
+
+    function drawLines(targetData){
       let stock = d3G.selectAll(".stock")
-        .data(processedStocks)
+        .data(targetData)
         .enter().append<SVGGElement>('g')
         .attr("fill", "none")
-        .attr("class", "stock");
-        //.on("mouseover", mouseover);
+        .attr("class", "stock")
+        .on('mouseover', function(d : any) { 
+            let tooltip = d3.select(".datamaps-hoverover"); 
+            tooltip.html('<div class="hoverinfo">' 
+                + 'Average Return: <strong>' 
+                + "HEY"
+                + '</strong>'
+                +  '</div>')
+            .style('left', ( d3.event.pageX) + "px")
+            .style('top', ( (d3.event.pageY - 150)) + "px")
+            .style("display", "inline-block");
+            
+            d3.selectAll(".line" )
+            .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+            d3.selectAll(".line-" + d.ticker_symbol)
+            .transition()
+              .duration(300)
+              .style("stroke-width", 3 );
+        }) 
+        .on('mouseout', function(d : any) { 
+          d3.selectAll(".line" )
+          .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+        }) 
 
       stock.append('path')
         .attr("d", (d : any) => line(d.values) )
@@ -219,26 +239,29 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .attr("transform", (d) => "translate(270," + (d.id * 20) + ")" )
         .attr("x", 3)
         .attr("dy", "0.35em")
+        .style('cursor', 'pointer')
         .style("font", "14px sans-serif")
         .style("fill", (d : any) => z(d.id) )
-        .text(function(d) { return d.ticker_symbol; });
-
-      /*
-      let newd3G = d3G.selectAll(".stock").transition();
-
-        // Make the changes
-        newd3G.selectAll(".line")   // change the line
-            .duration(750)
-            .attr("d", (d : any) => line(d.values) )
-           .style("stroke", (d : any) => z(d.id) );
-          */
-        newD3Svg.select(".axis--x") // change the x axis
-            .duration(750)
-            .call(xAxis);
-
-        newD3Svg.select(".axis--y") // change the y axis
-            .duration(750)
-            .call(yAxis);
+        .attr('class', function(d,i: any){
+            return ("graph-text-" + i + "-" + d.ticker_symbol);
+        })
+        .text(function(d) { return d.ticker_symbol; })
+        .on('mouseover', function(d : any) {   
+          d3.selectAll(".line" )
+              .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+          d3.selectAll(".line-" + d.ticker_symbol)
+            .transition()
+            .duration(300)
+            .style("stroke-width", 3 );
+         })
+         .on('mouseout', function(d : any) { 
+          d3.selectAll(".line" )
+          .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+        }) 
     }
   }
 

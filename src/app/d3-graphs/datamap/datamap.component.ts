@@ -10,18 +10,18 @@ import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-li
   template: `
     
     <div class="row">
-      <div class="col col-lg-8 col-md-12 col-sm-12">
+      <div class="col col-lg-7 col-md-12 col-sm-12">
         <div id="map" class="map" style="position: relative; width: 100%; height: 100%;"></div>
       </div>
-      <div class="col col-lg-4 col-md-4 col-sm-12">  
+      <div class="col col-lg-5 col-md-12 col-sm-12">  
         <div class="row">
-          <div class="col col-lg-12 col-md-12 col-sm-12">
+          <div class="col col-lg-12 col-md-4 col-sm-6">
               <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.change"  ></app-wrapper-multi-series-line-chart>
           </div>
-          <div class="col col-lg-12 col-md-12 col-sm-12">
+          <div class="col col-lg-12 col-md-4 col-sm-6">
               <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.daily_return"  ></app-wrapper-multi-series-line-chart>
           </div>
-          <div class="col col-lg-12 col-md-12 col-sm-12">
+          <div class="col col-lg-12 col-md-4 col-sm-6">
               <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.volume"  ></app-wrapper-multi-series-line-chart>
           </div>
         </div>
@@ -31,7 +31,7 @@ import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-li
   `
 })
 @NgModule({
-  declarations: [
+  providers: [
     MultiSeriesLineChartComponent,
     WrapperMultiSeriesLineChartComponent
   ]
@@ -210,6 +210,19 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       return v.country_code == "US"; 
     });
 
+    /*
+    
+    ukStocks.reduce((v), (element, total) =>{
+      console.log("Element: " + element);
+      console.log("Total: " + total);
+    })
+    let ukStocksPieData = ukStocks.map((v)=> {
+        return { 
+          "ticker_symbol" : v.ticker_symbol,
+          "name": v.name,
+          "value": v.values[v.length-1].close
+        }
+    })*/
     /*function createObject(target){
 
     }
@@ -440,14 +453,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .style("fill", "white")
       .text(function(d: any) { return d.averageReturn})
       .on('mouseover', function(d : any) {  
-       tooltip.html('<div class="hoverinfo">' 
-              + 'Average Return: <strong>' 
-              + d.averageReturn
-              + '</strong>'
-              +  '</div>')
-          .style('left', ( d3.event.pageX) + "px")
-          .style('top', ( (d3.event.pageY - 150)) + "px")
-          .style("display", "inline-block");
       }) 
 
     let tooltip = d3.select(".datamaps-hoverover");
@@ -458,7 +463,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .enter()
       .append<SVGGElement>('path')
       .attr('d',  arc)
-      .attr('cursor', 'pointer')
+      .style('cursor', 'pointer')
       .style('fill', function(d,i: any){
         return color(i)
       })
@@ -471,26 +476,30 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
               + d.value 
               + '</strong> <br>'
               + 'Averate Return: <strong>' 
-              + d.average_return
+              + d.data.averageReturn
               + '</strong> <br>'
               + 'Averate Daily Return: <strong>' 
-              + d.average_daily_return
+              + d.data.averageDailyReturn
               + '</strong>'
               +  '</div>')
           .style('left', ( d3.event.pageX) + "px")
           .style('top', ( (d3.event.pageY - 150)) + "px")
           .style("display", "inline-block");
-      }) 
-      .on('click', function(d : any) {   
+
           d3.selectAll(".line" )
               .transition()
               .duration(300)
               .style("stroke-width", 1 );
           d3.selectAll(".line-" + d.data.ticker_symbol)
             .transition()
-            .duration(500)
+            .duration(300)
             .style("stroke-width", 3 );
-      });
+      }).on('mouseout', function(d : any) { 
+          d3.selectAll(".line" )
+          .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+        });
       
     
      pies
@@ -531,20 +540,23 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         GBR: { fillKey: "exists" }
       },
        done: function(datamap) {
-            datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
-              debugger;
-              var id = geography.id == "USA" ? "us" : geography.id == "GBR" ? "uk" : null;
-              if(id){
-                datamap.svg.selectAll(".line" )
-                  .transition()
-                  .duration(300)
-                  .style("stroke-width", 1 );
-                datamap.svg.selectAll(".line-" + id)
-                  .transition()
-                  .duration(500)
-                  .style("stroke-width", 3 );
-              }
-            });
+          function highlight(country){
+            /*d3.select('body').selectAll(".line" )
+              .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+           d3.selectAll("body .line-" + country)
+              .transition()
+              .duration(500)
+              .style("stroke-width", 3 );
+            datamap.svg.selectAll("body .line-" + country).style("stroke-width", 3 );*/
+          }
+          
+          datamap.svg.select('.datamaps-subunit.USA')
+              .on('click', function(geography) { highlight("us")});
+          datamap.svg.select('.datamaps-subunit.GBR')
+              .on('click', function(geography) { highlight("uk")});
+                    
         }
     });
 
