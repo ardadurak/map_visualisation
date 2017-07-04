@@ -2,8 +2,6 @@ import { Stocks } from '../shared';
 import { NgModule, Component, ElementRef, Input, NgZone, OnChanges, OnDestroy, OnInit, SimpleChange } from '@angular/core';
 import { D3Service, D3, Axis, BrushBehavior, BrushSelection, D3BrushEvent, ScaleTime, ScaleLinear, ScaleOrdinal, Selection, Transition} from 'd3-ng2-service';
 import * as Datamap from 'datamaps';
-import { MultiSeriesLineChartComponent } from '../multi-series-line-chart/multi-series-line-chart.component';
-import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-line-chart/wrapper-multi-series-line-chart.component';
 
 @Component({
   selector: 'app-datamap',
@@ -13,28 +11,9 @@ import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-li
       <div class="col col-lg-8 col-md-12 col-sm-12">
         <div id="map" class="map" style="position: relative; width: 100%; height: 100%;"></div>
       </div>
-      <div class="col col-lg-4 col-md-4 col-sm-12">  
-        <div class="row">
-          <div class="col col-lg-12 col-md-12 col-sm-12">
-              <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.change"  ></app-wrapper-multi-series-line-chart>
-          </div>
-          <div class="col col-lg-12 col-md-12 col-sm-12">
-              <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.daily_return"  ></app-wrapper-multi-series-line-chart>
-          </div>
-          <div class="col col-lg-12 col-md-12 col-sm-12">
-              <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.volume"  ></app-wrapper-multi-series-line-chart>
-          </div>
-        </div>
-      </div>
    </div>
     
   `
-})
-@NgModule({
-  declarations: [
-    MultiSeriesLineChartComponent,
-    WrapperMultiSeriesLineChartComponent
-  ]
 })
 export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
 
