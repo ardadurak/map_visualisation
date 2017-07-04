@@ -15,12 +15,11 @@
     "url": "https://github.com/tomwanzek"
   },
   "scripts": {
-    "ng": "ng",
     "start": "node server.js",
-    "build": "ng build",
+    "lint": "tslint \"src/**/*.ts\"",
     "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e",
+    "pree2e": "webdriver-manager update",
+    "e2e": "protractor",
     "postinstall": "ng build --aot -prod",
     "deploy": "git push origin master && git push heroku master"
   },
