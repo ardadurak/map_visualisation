@@ -38,6 +38,8 @@
     "bootstrap": "3.3.7",
     "core-js": "^2.4.1",
     "d3-ng2-service": "1.9.0",
+    "datamaps": "^0.5.8",
+    "mydatepicker": "^2.0.22",
     "rxjs": "5.3.0",
     "zone.js": "0.8.5"
   },

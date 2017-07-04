@@ -1,0 +1,20 @@
+<div class="container">
+  <div class="row">
+    <div class="col col-lg-2 col-md-4 col-sm-4">
+      <label> From: </label>
+      <my-date-picker placeholder="27/06/2016" [options]="myDatePickerOptions" (dateChanged)="startDateChanged($event)"></my-date-picker>
+    </div>
+    <div class="col col-lg-2 col-md-4 col-sm-4">
+      <label> To: </label>
+      <my-date-picker placeholder="27/06/2017" [options]="myDatePickerOptions" (dateChanged)="endDateChanged($event)"></my-date-picker>
+    </div>
+    <div class="col col-lg-8 col-md-8 col-sm-4">
+    </div>
+  </div>
+  
+  <div class="row">
+    <div class="col col-lg-12 col-md-12 col-sm-12">
+        <app-datamap [startDate]="startDate" [endDate]="endDate" [stockData]="stockData" > </app-datamap>
+    </div>
+  </div>
+</div>
