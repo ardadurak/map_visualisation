@@ -196,6 +196,8 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
             .call(yAxis);
     }
 
+    let tooltip = d3.select(".datamaps-hoverover"); 
+
     function drawLines(targetData){
       let stock = d3G.selectAll(".stock")
         .data(targetData)
@@ -203,10 +205,10 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .attr("fill", "none")
         .attr("class", "stock")
         .on('mouseover', function(d : any) { 
-            let tooltip = d3.select(".datamaps-hoverover"); 
             tooltip.html('<div class="hoverinfo">' 
-                + 'Average Return: <strong>' 
-                + "HEY"
+                + d.ticker_symbol
+                + ': <strong>' 
+                + y.invert(d3.mouse(this)[1])
                 + '</strong>'
                 +  '</div>')
             .style('left', ( d3.event.pageX) + "px")
@@ -227,6 +229,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
           .transition()
               .duration(300)
               .style("stroke-width", 1 );
+          tooltip.style('display', 'none');  
         }) 
 
       stock.append('path')

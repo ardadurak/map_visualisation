@@ -451,9 +451,20 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .attr("class", "average-text")
       .style("text-anchor", "middle")
       .style("fill", "white")
+      .style("cursor", "pointer")
       .text(function(d: any) { return d.averageReturn})
       .on('mouseover', function(d : any) {  
-      }) 
+          tooltip.html('<div class="hoverinfo">' 
+          + 'Average Return: <strong>' 
+          + d.averageReturn
+          + '</strong>'
+          +  '</div>')
+          .style('left', ( d3.event.pageX) + "px")
+          .style('top', ( (d3.event.pageY - 150)) + "px")
+          .style("display", "inline-block");
+      }).on('mouseout', function(d : any) { 
+          tooltip.style('display', 'none');  
+        });
 
     let tooltip = d3.select(".datamaps-hoverover");
               
@@ -499,16 +510,9 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
           .transition()
               .duration(300)
               .style("stroke-width", 1 );
+          tooltip.style('display', 'none');  
         });
-      
     
-     pies
-      .on('mouseover', function(d : any) { 
-        //tooltip.select('.average-return').html("Average Return:" + d.averageReturn);     
-        //tooltip.style('display', 'block');    
-      })     
-      .on('mouseout', function() {            
-      });  
 
     /*
     pies.selectAll('.slice')
