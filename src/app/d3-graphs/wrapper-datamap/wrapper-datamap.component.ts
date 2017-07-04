@@ -31,10 +31,11 @@ export class WrapperDatamapComponent implements OnInit {
 
   public startDateChanged(event: IMyDateModel) {
 
-    // let startDateTime = startDate.setHours(0, 0, 0, 0);
-    //let endDateTime = endDate.setHours(0, 0, 0, 0);
     let selectedDate = new Date(event.jsdate);
-    if(selectedDate.getFullYear() == 1970){
+    let startDateTime = selectedDate.setHours(0, 0, 0, 0);
+    let endDateTime = this.endDate.setHours(0, 0, 0, 0);
+
+    if(selectedDate.getFullYear() == 1970 || startDateTime >= endDateTime){
       this.startDate = this.defaultStartDate;
     }
     else{
@@ -42,8 +43,12 @@ export class WrapperDatamapComponent implements OnInit {
     }
   }
   public endDateChanged(event: IMyDateModel) {
+
     let selectedDate = new Date(event.jsdate);
-     if(selectedDate.getFullYear() == 1970){
+    let startDateTime = this.startDate.setHours(0, 0, 0, 0);
+    let endDateTime = selectedDate.setHours(0, 0, 0, 0);
+
+    if(selectedDate.getFullYear() == 1970 || startDateTime >= endDateTime){
       this.endDate = this.defaultEndDate;
     }
     else{

@@ -68,7 +68,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
       x = d3.scaleTime().range([0, width]);
       y = d3.scaleLinear().range([height, 0]);
       z = d3.scaleOrdinal<number, string>(d3.schemeCategory10);
-      
+
       xAxis = d3.axisBottom(x).tickFormat(d3.timeFormat("%b"));
       yAxis  = d3.axisLeft(y)
    
@@ -113,25 +113,49 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .enter().append<SVGGElement>('g')
         .attr("fill", "none")
         .attr("class", "stock")
-        .on("mouseover", mousemove);
+        .on("mouseover", mouseover);
 
       stock.append('path')
-        .attr("class", "line")
         .attr("d", (d : any) => line(d.values) )
-        .style("stroke", (d : any) => z(d.id) );
+        .style("stroke", (d : any) => z(d.id) )
+        .attr("class", (d: any) => "line line-" + d.country_code + " line-" + d.ticker_symbol) ;
 
+        // ardadarda
       stock.append('text')
         .datum(function(d : any) { return {id: d.id, ticker_symbol: d.ticker_symbol, value: d.values[d.values.length - 1]}; })
         .attr("transform", (d) => "translate(270," + (d.id * 20) + ")" )
         .attr("x", 3)
         .attr("dy", "0.35em")
         .style("font", "14px sans-serif")
+        .style('class', function(d,i: any){
+            return ("graph-text-" + i + "-" + d.ticker_symbol);
+        })
         .style("fill", (d : any) => z(d.id) )
         .text(function(d) { return d.ticker_symbol; });
 
       var focus = d3Svg.append("g")
           .attr("class", "focus")
           .style("display", "none");
+
+      function mouseover(){
+        //debugger;
+        let bisectDate = d3.bisector(function(d : any) { return d.date; }).left;
+        let x0 : any = new Date(x.invert(d3.mouse(this)[0]));
+        var valueData = processedStocks[0].values;
+        let i = bisectDate(valueData, x0, 1);
+        let d0 = valueData[i - 1];
+        let d1 = valueData[i];
+        let d = x0 - d0.date > d1.date - x0 ? d1 : d0;
+
+        console.log(d);
+        
+        //var i = this.stock(processedStocks, x0, 1);
+        //var d0 = d3G.data[i - 1];
+        //var d1 = d3G.data[i];
+        
+        //console.log("d0" + d0);
+          //console.log("d1" + d1);
+      }
     }
 
     function updateGraph(targetData){
@@ -167,7 +191,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
       }
       else if(days < 180){
         console.log("b");
-        xAxis.ticks(6);
+        xAxis.ticks(4);
       }
       else{
         console.log("c");
@@ -182,13 +206,13 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .data(processedStocks)
         .enter().append<SVGGElement>('g')
         .attr("fill", "none")
-        .attr("class", "stock")
-        .on("mouseclick", mousemove);
+        .attr("class", "stock");
+        //.on("mouseover", mouseover);
 
       stock.append('path')
-        .attr("class", "line")
         .attr("d", (d : any) => line(d.values) )
-        .style("stroke", (d : any) => z(d.id) );
+        .style("stroke", (d : any) => z(d.id) )
+        .attr("class", (d: any) => "line line-" + d.country_code + " line-" + d.ticker_symbol) ;
 
       stock.append('text')
         .datum(function(d : any) { return {id: d.id, ticker_symbol: d.ticker_symbol, value: d.values[d.values.length - 1]}; })
@@ -216,22 +240,6 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
             .duration(750)
             .call(yAxis);
     }
-
-    function mousemove(){
-      var x0 = x.invert(d3.mouse(this)[0]);
-      var y0= d3.mouse(this)[1];
-      debugger;
-      console.log("x0: " + x0);
-      console.log("y0: " + y0);
-      
-      //var i = this.stock(processedStocks, x0, 1);
-      //var d0 = d3G.data[i - 1];
-      //var d1 = d3G.data[i];
-      
-       //console.log("d0" + d0);
-        //console.log("d1" + d1);
-    }
-    
   }
 
   ngOnChanges(changes: { [propKey: string]: SimpleChange }) {

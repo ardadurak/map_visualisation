@@ -133,7 +133,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let svgHeight = parseFloat(d3Svg.style('height'));
     let xUk = svgWidth * this.xFactorUk, xUs = svgWidth * this.xFactorUs;
     let yUk = svgHeight * this.yFactorUk, yUs = svgHeight * this.yFactorUs;
-    
+    //ardadarda
     d3Svg.select('.circle-uk')
       .attr("cx", xUk)
       .attr("cy", yUk)
@@ -214,6 +214,25 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
 
     }
 */
+    /*
+      toBeChanged
+        function getChartData(targetArray, targetCountry){
+      return { 
+        "country": targetCountry, 
+        "averageDailyReturn" : ((parseFloat(targetArray[0].average_daily_return) + parseFloat(targetArray[1].average_daily_return)) / 2).toFixed(2), 
+        "averageReturn" : ((parseFloat(targetArray[0].average_return) + parseFloat(targetArray[1].average_return)) / 2).toFixed(2), 
+        "data" : targetArray.map((v) => {
+                return { 
+                  "ticker_symbol" : v.ticker_symbol,
+                  "name": v.name,
+                  "value": v.values[v.length-1].close
+                }
+            })
+      };
+    }
+   
+    let chartObject = [ getChartData(ukStocks, "uk"), getChartData(usStocks, "us") ];
+    */ 
     let chartObject = [ 
       { 
         "country": "uk", 
@@ -221,12 +240,18 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         "averageReturn" : ((parseFloat(ukStocks[0].average_return) + parseFloat(ukStocks[1].average_return)) / 2).toFixed(2), 
         "data" :[
           {
+            "ticker_symbol": ukStocks[0].ticker_symbol,
             "name": ukStocks[0].name,
-            "value": ukStocks[0].values[ukStocks.length-1].close
+            "value": ukStocks[0].values[ukStocks.length-1].close,
+            "averageDailyReturn": parseFloat(ukStocks[0].average_daily_return),
+            "averageReturn": parseFloat(ukStocks[0].average_return)
           },
           {
+            "ticker_symbol": ukStocks[1].ticker_symbol,
             "name": ukStocks[1].name,
-            "value": ukStocks[1].values[ukStocks.length-1].close
+            "value": ukStocks[1].values[ukStocks.length-1].close,
+            "averageDailyReturn": parseFloat(ukStocks[1].average_daily_return),
+            "averageReturn": parseFloat(ukStocks[1].average_return)
           },
         ]
       },
@@ -236,12 +261,18 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         "averageReturn" : ((parseFloat(usStocks[0].average_return) + parseFloat(usStocks[1].average_return)) / 2).toFixed(2), 
         "data" :[
           {
+            "ticker_symbol": usStocks[0].ticker_symbol,
             "name": usStocks[0].name,
-            "value": usStocks[0].values[usStocks.length-1].close
+            "value": usStocks[0].values[usStocks.length-1].close,
+            "averageDailyReturn": parseFloat(usStocks[0].average_daily_return),
+            "averageReturn": parseFloat(usStocks[0].average_return)
           },
           {
+            "ticker_symbol": usStocks[1].ticker_symbol,
             "name": usStocks[1].name,
-            "value": usStocks[1].values[usStocks.length-1].close
+            "value": usStocks[1].values[usStocks.length-1].close,
+            "averageDailyReturn": parseFloat(usStocks[1].average_daily_return),
+            "averageReturn": parseFloat(usStocks[1].average_return)
           },
         ]
       }
@@ -293,8 +324,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     d3Svg.selectAll('.pie-uk').select('.daily-text').text(pieData[0].averageDailyReturn); 
     d3Svg.selectAll('.pie-us').select('.daily-text').text(pieData[1].averageDailyReturn); 
    
-    d3Svg.selectAll('.pie-uk').select('.average-text').text("Average Return: " + pieData[0].averageReturn)
-    d3Svg.selectAll('.pie-us').select('.average-text').text("Average Return: " + pieData[1].averageReturn)
+    d3Svg.selectAll('.pie-uk').select('.average-text').text(pieData[0].averageReturn)
+    d3Svg.selectAll('.pie-us').select('.average-text').text(pieData[1].averageReturn)
     
     this.drawPieCharts(pieData);
     this.relocateComponents();
@@ -349,12 +380,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     this.d3Svg.append("circle")
       .attr("r", 50)
       .attr("fill", '#747474')
-      .attr('class', 'circle-uk');
+      .attr('class', 'circle-uk')
+      .attr('stroke-opacity', 0);
     
     this.d3Svg.append("circle")
       .attr("r", 50)
       .attr("fill",  '#747474')
-      .attr('class', 'circle-us');
+      .attr('class', 'circle-us')
+      .attr('stroke-opacity', 0);
   }
 
   public drawPieCharts(pieData){
@@ -390,13 +423,32 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .style("fill", "white")
       .text(function(d: any) { return d.averageDailyReturn})
 
+    pies  
+      .append("circle")
+      .attr("cx", "4.6em")
+      .attr("cy", 0)
+      .attr("r", 25)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0);
+
     pies
       .append("text")
-      .attr("dx", "9em")
+      .attr("dy", "0.3em")
+      .attr("dx", "4.6em")
       .attr("class", "average-text")
       .style("text-anchor", "middle")
-      .style("fill", "black")
-      .text(function(d: any) { return "Average Return: " + d.averageReturn})
+      .style("fill", "white")
+      .text(function(d: any) { return d.averageReturn})
+      .on('mouseover', function(d : any) {  
+       tooltip.html('<div class="hoverinfo">' 
+              + 'Average Return: <strong>' 
+              + d.averageReturn
+              + '</strong>'
+              +  '</div>')
+          .style('left', ( d3.event.pageX) + "px")
+          .style('top', ( (d3.event.pageY - 150)) + "px")
+          .style("display", "inline-block");
+      }) 
 
     let tooltip = d3.select(".datamaps-hoverover");
               
@@ -411,37 +463,42 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         return color(i)
       })
       .on('mouseover', function(d : any) {  
-       // tooltip.select('.company').html(d.data.name);     
-       // tooltip.select('.value').html("Price: " + d.data.value);          
-       // tooltip.style('display', 'block');    
        tooltip.html('<div class="hoverinfo">' 
               + '<strong>' 
               + d.data.name 
               + '</strong> <br>'
               + 'Price: <strong>' 
               + d.value 
+              + '</strong> <br>'
+              + 'Averate Return: <strong>' 
+              + d.average_return
+              + '</strong> <br>'
+              + 'Averate Daily Return: <strong>' 
+              + d.average_daily_return
               + '</strong>'
               +  '</div>')
-          //.style("left", d3.event.pageX+10+"px")
-          //.style("top", d3.event.pageY-25+"px")
           .style('left', ( d3.event.pageX) + "px")
           .style('top', ( (d3.event.pageY - 150)) + "px")
           .style("display", "inline-block");
-      })     
-      .on('mouseout', function() {        
-        //tooltip.style('display', 'none');     
-      });  
+      }) 
+      .on('click', function(d : any) {   
+          d3.selectAll(".line" )
+              .transition()
+              .duration(300)
+              .style("stroke-width", 1 );
+          d3.selectAll(".line-" + d.data.ticker_symbol)
+            .transition()
+            .duration(500)
+            .style("stroke-width", 3 );
+      });
+      
     
      pies
       .on('mouseover', function(d : any) { 
-        
-        
-        
         //tooltip.select('.average-return').html("Average Return:" + d.averageReturn);     
         //tooltip.style('display', 'block');    
       })     
-      .on('mouseout', function() {        
-        tooltip.style('display', 'none');     
+      .on('mouseout', function() {            
       });  
 
     /*
@@ -472,8 +529,25 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       },data: {
         USA: { fillKey: "exists" },
         GBR: { fillKey: "exists" }
-      }
+      },
+       done: function(datamap) {
+            datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+              debugger;
+              var id = geography.id == "USA" ? "us" : geography.id == "GBR" ? "uk" : null;
+              if(id){
+                datamap.svg.selectAll(".line" )
+                  .transition()
+                  .duration(300)
+                  .style("stroke-width", 1 );
+                datamap.svg.selectAll(".line-" + id)
+                  .transition()
+                  .duration(500)
+                  .style("stroke-width", 3 );
+              }
+            });
+        }
     });
+
     map.bubbles([
       {
         name: 'USA',
@@ -503,29 +577,29 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       {
           origin: 'USA',
           destination: {
-   latitude: 20,
-   longitude: -57
+            latitude: 20,
+            longitude: -57
           },
-          options: {
- strokeWidth: 3,
- strokeColor: '#747474',
- greatArc: true,
- animationSpeed: 1000,
- arcSharpness: 0
+            options: {
+            strokeWidth: 3,
+            strokeColor: '#747474',
+            greatArc: true,
+            animationSpeed: 1000,
+            arcSharpness: 0
           }
       },
       {
           origin: 'GBR',
           destination: {
-   latitude: 70,
-   longitude: -5
+          latitude: 70,
+          longitude: -5
           },
           options: {
- strokeWidth: 3,
- strokeColor: '#747474',
- greatArc: false,
- animationSpeed: 1000,
- arcSharpness: 0
+            strokeWidth: 3,
+            strokeColor: '#747474',
+            greatArc: false,
+            animationSpeed: 1000,
+            arcSharpness: 0
           }
       }
     ],  {strokeWidth: 1, arcSharpness: 1.4});
