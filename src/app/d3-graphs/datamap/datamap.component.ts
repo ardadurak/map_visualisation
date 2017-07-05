@@ -238,6 +238,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         "averageReturn" : ((parseFloat(ukStocks[0].average_return) + parseFloat(ukStocks[1].average_return)) / 2).toFixed(2), 
         "data" :[
           {
+            "country_code": "uk", 
             "id": ukStocks[0].id,
             "ticker_symbol": ukStocks[0].ticker_symbol,
             "name": ukStocks[0].name,
@@ -246,6 +247,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             "averageReturn": parseFloat(ukStocks[0].average_return)
           },
           {
+            "country_code": "uk", 
             "id": ukStocks[1].id,
             "ticker_symbol": ukStocks[1].ticker_symbol,
             "name": ukStocks[1].name,
@@ -261,6 +263,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         "averageReturn" : ((parseFloat(usStocks[0].average_return) + parseFloat(usStocks[1].average_return)) / 2).toFixed(2), 
         "data" :[
           {
+            "country_code": "us", 
             "id": usStocks[0].id,
             "ticker_symbol": usStocks[0].ticker_symbol,
             "name": usStocks[0].name,
@@ -269,6 +272,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             "averageReturn": parseFloat(usStocks[0].average_return)
           },
           {
+            "country_code": "us", 
             "id": usStocks[1].id,
             "ticker_symbol": usStocks[1].ticker_symbol,
             "name": usStocks[1].name,
@@ -464,13 +468,11 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
           tooltip.style('display', 'none');  
         });
     pies
-
       .append("text")
       .attr("dy", "0.5em")
-      .attr("class", "daily-text")
+      .attr("class", "middle-text")
       .style("text-anchor", "middle")
-      .style("fill", "white")
-      .text(function(d: any) { return d.averageDailyReturn})
+      .style("fill", "white");
 
     let tooltip = d3.select(".datamaps-hoverover");
               
@@ -501,6 +503,13 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
           .style('top', ( (d3.event.pageY - 150)) + "px")
           .style("display", "inline-block");
 
+          d3Svg
+            .selectAll('.pie-' + d.data.country_code)
+            .select(".middle-text" )
+            .text((d.data.averageReturn + '%'))
+            .style("font-size", "10px")
+            .style("fill", "white");
+            
           d3.selectAll(".line" )
               .transition()
               .duration(300)
@@ -515,6 +524,11 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
               .duration(300)
               .style("stroke-width", 1 );
           tooltip.style('display', 'none');  
+
+          d3Svg
+          .selectAll('.pie-' + d.data.country_code)
+          .select(".middle-text" )
+          .text('');
         });
     
 

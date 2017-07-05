@@ -237,7 +237,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .datum(function(d : any) { return {id: d.id, ticker_symbol: d.ticker_symbol, value: d.values[d.values.length - 1]}; })
         .attr("transform", (d) => "translate(270," + (d.id * 20) + ")" )
         .attr("x", 3)
-        .attr("dy", "0.35em")
+        .attr("dy", "1.35em")
         .style('cursor', 'pointer')
         .style("font", "14px sans-serif")
         .style("fill", (d : any) => color[d.id])
