@@ -18,12 +18,6 @@ import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-li
           <div class="col col-lg-12 col-md-4 col-sm-6">
               <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.change"  ></app-wrapper-multi-series-line-chart>
           </div>
-          <div class="col col-lg-12 col-md-4 col-sm-6">
-              <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.daily_return"  ></app-wrapper-multi-series-line-chart>
-          </div>
-          <div class="col col-lg-12 col-md-4 col-sm-6">
-              <app-wrapper-multi-series-line-chart [stockData]="stockData" [graphAttribute]="graphTypes.volume"  ></app-wrapper-multi-series-line-chart>
-          </div>
         </div>
       </div>
    </div>
@@ -93,7 +87,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     d3Svg = this.d3Svg = d3ParentElement.select<SVGSVGElement>('svg');
     d3SvgGraph = this.d3SvgGraph = d3ParentElement.select<SVGSVGElement>('.graph');
     d3SvgDetails = this.d3SvgDetails = d3ParentElement.select<SVGSVGElement>('.details');
-    this.drawCircles();
+    
     this.drawPieCharts(pieData);
     this.graphTypes = {
       "change": "change",
@@ -110,15 +104,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       let svgHeight = parseFloat(d3Svg.style('height'));
       let xUk = svgWidth * xFactorUk, xUs = svgWidth * xFactorUs;
       let yUk = svgHeight * yFactorUk, yUs = svgHeight * yFactorUs;
-      
-      d3Svg.select('.circle-uk')
-        .attr("cx", xUk)
-        .attr("cy", yUk)
-
-      d3Svg.select('.circle-us')
-        .attr("cx", xUs) 
-        .attr("cy", yUs)
-
+    
       d3Svg.select('.pie-uk')      
         .attr("transform", ("translate(" + xUk + "," + yUk + ")"));
       
@@ -134,13 +120,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let xUk = svgWidth * this.xFactorUk, xUs = svgWidth * this.xFactorUs;
     let yUk = svgHeight * this.yFactorUk, yUs = svgHeight * this.yFactorUs;
     //ardadarda
-    d3Svg.select('.circle-uk')
-      .attr("cx", xUk)
-      .attr("cy", yUk)
-
-    d3Svg.select('.circle-us')
-      .attr("cx", xUs) 
-      .attr("cy", yUs)
 
     d3Svg.select('.pie-uk')      
       .attr("transform", ("translate(" + xUk + "," + yUk + ")"));
@@ -161,13 +140,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       let totalVolume = 0;
       for(let i = 1 ; i < length ; i++){
         let currentValue = v.values[i];
-        totalDailyReturn = totalDailyReturn + currentValue.daily_return;
+        totalDailyReturn = totalDailyReturn + parseFloat(currentValue.daily_return);
         totalVolume = totalVolume + parseFloat(currentValue.volume);
-        v.values[i].change = ((currentValue.close-initialPrice) / initialPrice) * 100;  // change rate value
+        v.values[i].change = parseFloat((Math.round(((currentValue.close-initialPrice) / initialPrice) * 100 * 100) / 100 ).toFixed(2));  // change rate value
       }
-      v.average_daily_return = totalDailyReturn / length;
-      v.average_volume = totalVolume / length;
-      v.average_return = parseFloat((Math.round((Math.pow(((v.average_daily_return / 100) + 1 ), length) - 1) * 100 * 100)/ 100).toFixed(2));
+       
+      v.average_daily_return = parseFloat((totalDailyReturn / length).toFixed(2));
+      v.average_volume = parseFloat((Math.round((totalVolume / length) * 100 ) / 100 ).toFixed(2));
+      v.average_return = (Math.round((Math.pow(((v.average_daily_return / 100) + 1 ), length) - 1) * 100 * 100)/ 100);
 
       return v; 
     });
@@ -179,19 +159,24 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       
     return resultObject.map((v) => {
       var length = v.values.length;
-      let initialPrice = v.values[0].close ;
+      let initialPrice = parseFloat(v.values[0].close) ;
       let totalDailyReturn = 0;
       let totalVolume = 0;
+
       for(let i = 1 ; i < length ; i++){
+        v.values[i].close = parseFloat( v.values[i].close);
+        v.values[i].volume = parseFloat( v.values[i].volume);
         let currentValue = v.values[i];
         let dailyReturn = ((currentValue.close - v.values[i-1].close) / currentValue.close) * 100; // daily return
         totalDailyReturn = totalDailyReturn + dailyReturn;
         v.values[i].daily_return = dailyReturn; // daily return value
-         totalVolume = totalVolume + parseFloat(currentValue.volume);
-        v.values[i].change = ((currentValue.close-initialPrice) / initialPrice) * 100;  // change rate value
-      }
-      v.average_daily_return = totalDailyReturn / length;
-      v.average_volume = totalVolume / length;
+        totalVolume = totalVolume + parseFloat(currentValue.volume);
+        v.values[i].change = parseFloat((Math.round(((currentValue.close-initialPrice) / initialPrice) * 100 * 100) / 100 ).toFixed(2));  // change rate value
+        v.values[i].close = (Math.round( v.values[i].close * 100) / 100).toFixed(2);
+        v.values[i].volume = (Math.round( v.values[i].volume * 100) / 100).toFixed(2);
+    }
+      v.average_daily_return = parseFloat((totalDailyReturn / length).toFixed(2));
+      v.average_volume = parseFloat((Math.round((totalVolume / length) * 100 ) / 100 ).toFixed(2));
       v.average_return = parseFloat((Math.round((Math.pow(((v.average_daily_return / 100) + 1 ), length) - 1) * 100 * 100)/ 100).toFixed(2));
 
       return v; 
@@ -253,6 +238,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         "averageReturn" : ((parseFloat(ukStocks[0].average_return) + parseFloat(ukStocks[1].average_return)) / 2).toFixed(2), 
         "data" :[
           {
+            "id": ukStocks[0].id,
             "ticker_symbol": ukStocks[0].ticker_symbol,
             "name": ukStocks[0].name,
             "value": ukStocks[0].values[ukStocks.length-1].close,
@@ -260,6 +246,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             "averageReturn": parseFloat(ukStocks[0].average_return)
           },
           {
+            "id": ukStocks[1].id,
             "ticker_symbol": ukStocks[1].ticker_symbol,
             "name": ukStocks[1].name,
             "value": ukStocks[1].values[ukStocks.length-1].close,
@@ -274,6 +261,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         "averageReturn" : ((parseFloat(usStocks[0].average_return) + parseFloat(usStocks[1].average_return)) / 2).toFixed(2), 
         "data" :[
           {
+            "id": usStocks[0].id,
             "ticker_symbol": usStocks[0].ticker_symbol,
             "name": usStocks[0].name,
             "value": usStocks[0].values[usStocks.length-1].close,
@@ -281,6 +269,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             "averageReturn": parseFloat(usStocks[0].average_return)
           },
           {
+            "id": usStocks[1].id,
             "ticker_symbol": usStocks[1].ticker_symbol,
             "name": usStocks[1].name,
             "value": usStocks[1].values[usStocks.length-1].close,
@@ -388,21 +377,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
      
      */ 
   }
-  
-  public drawCircles(){
-    this.d3Svg.append("circle")
-      .attr("r", 50)
-      .attr("fill", '#747474')
-      .attr('class', 'circle-uk')
-      .attr('stroke-opacity', 0);
-    
-    this.d3Svg.append("circle")
-      .attr("r", 50)
-      .attr("fill",  '#747474')
-      .attr('class', 'circle-us')
-      .attr('stroke-opacity', 0);
-  }
-
   public drawPieCharts(pieData){
 
     this.d3Svg.selectAll('.pie-uk').remove();
@@ -410,7 +384,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     
     let d3 = this.d3;
     let d3Svg = this.d3Svg;
-    let color = d3.scaleOrdinal(d3.schemeCategory10);
+    let color = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"];
 
     var arc : any= d3.arc()
        .innerRadius(20).outerRadius(40);
@@ -427,14 +401,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .append<SVGGElement>('g')
       .attr('class', 'pie')
       .attr('class', function(d: any){ return 'pie-' + d.country})
-    
-    pies
-      .append("text")
-      .attr("dy", "0.5em")
-      .attr("class", "daily-text")
-      .style("text-anchor", "middle")
-      .style("fill", "white")
-      .text(function(d: any) { return d.averageDailyReturn})
+  
+    pies  
+      .append("circle")
+      .attr("cx", 0)
+      .attr("cy", 0)
+      .attr("r", 50)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0);
 
     pies  
       .append("circle")
@@ -444,27 +418,59 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .attr("fill", '#747474')
       .attr('stroke-opacity', 0);
 
+    pies  
+      .append("circle")
+      .attr("cx", "3.6em")
+      .attr("cy", "2.5em")
+      .attr("r", 20)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0);
+
     pies
       .append("text")
       .attr("dy", "0.3em")
-      .attr("dx", "4.6em")
+      .attr("dx", "6em")
       .attr("class", "average-text")
       .style("text-anchor", "middle")
+      .style("font-size", "11px")
       .style("fill", "white")
       .style("cursor", "pointer")
-      .text(function(d: any) { return d.averageReturn})
+      .text(function(d: any) { return d.averageReturn + '%'})
       .on('mouseover', function(d : any) {  
-          tooltip.html('<div class="hoverinfo">' 
-          + 'Average Return: <strong>' 
-          + d.averageReturn
-          + '</strong>'
-          +  '</div>')
+          tooltip.html('<div class="hoverinfo"> <strong> Periodic Return </strong> </div>')
           .style('left', ( d3.event.pageX) + "px")
           .style('top', ( (d3.event.pageY - 150)) + "px")
           .style("display", "inline-block");
       }).on('mouseout', function(d : any) { 
           tooltip.style('display', 'none');  
         });
+
+    pies
+      .append("text")
+      .attr("dy", "4em")
+      .attr("dx", "5.2em")
+      .attr("class", "average-text")
+      .style("text-anchor", "middle")
+      .style("font-size", "10px")
+      .style("fill", "white")
+      .style("cursor", "pointer")
+      .text(function(d: any) { return d.averageDailyReturn + '%'})
+      .on('mouseover', function(d : any) {  
+          tooltip.html('<div class="hoverinfo"> <strong> Average Daily Return </strong> </div>')
+          .style('left', ( d3.event.pageX) + "px")
+          .style('top', ( (d3.event.pageY - 150)) + "px")
+          .style("display", "inline-block");
+      }).on('mouseout', function(d : any) { 
+          tooltip.style('display', 'none');  
+        });
+    pies
+
+      .append("text")
+      .attr("dy", "0.5em")
+      .attr("class", "daily-text")
+      .style("text-anchor", "middle")
+      .style("fill", "white")
+      .text(function(d: any) { return d.averageDailyReturn})
 
     let tooltip = d3.select(".datamaps-hoverover");
               
@@ -475,9 +481,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .append<SVGGElement>('path')
       .attr('d',  arc)
       .style('cursor', 'pointer')
-      .style('fill', function(d,i: any){
-        return color(i)
-      })
+      .style('fill', (d : any) => color[d.data.id])
       .on('mouseover', function(d : any) {  
        tooltip.html('<div class="hoverinfo">' 
               + '<strong>' 
@@ -486,12 +490,12 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
               + 'Price: <strong>' 
               + d.value 
               + '</strong> <br>'
-              + 'Averate Return: <strong>' 
+              + 'Periodic Return: <strong>' 
               + d.data.averageReturn
-              + '</strong> <br>'
+              + '%</strong> <br>'
               + 'Averate Daily Return: <strong>' 
               + d.data.averageDailyReturn
-              + '</strong>'
+              + '%</strong>'
               +  '</div>')
           .style('left', ( d3.event.pageX) + "px")
           .style('top', ( (d3.event.pageY - 150)) + "px")

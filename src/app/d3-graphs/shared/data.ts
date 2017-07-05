@@ -2562,7 +2562,7 @@ export const Stocks =
         "close": 127.199997,
         "change": 0,"daily_return": 0,
         "adj_close": 125.337326,
-        "volume": 324668157
+        "volume": 124668157
       },
       {
         "date": "2016/06/28",
