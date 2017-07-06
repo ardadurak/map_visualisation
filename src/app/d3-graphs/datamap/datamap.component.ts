@@ -64,13 +64,11 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let d3ParentElement: Selection<HTMLElement, any, null, undefined>;
     let d3Svg: Selection<SVGSVGElement, any, null, undefined>;
     let d3G: Selection<SVGGElement, any, null, undefined>;
-    const xFactorUk = this.xFactorUk = 0.4859626225320041, yFactorUk = this.yFactorUk = 0.16291388766840606;
-    const xFactorUs = this.xFactorUs = 0.3795136671202318, yFactorUs = this.yFactorUs = 0.608870085225356;
-    let worldMap = this.initMap();
-    let relocate = this.relocateComponents;
+    let worldMap : any = this.initMap();
     let pieData : any;   
     let pieAttribute = "main_pie_data";
     this.color = d3.scaleOrdinal(d3.schemeCategory10);
+    
      // Initialize the canvas and draw the pie charts
     d3ParentElement = d3.select(this.parentNativeElement);
     d3Svg = this.d3Svg = d3ParentElement.select<SVGSVGElement>('svg');
@@ -80,6 +78,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     pieData = this.createPieData(processedStocks);
     this.drawPieCharts(pieData, pieAttribute);
     
+
     // Set parameters for the line graph
     this.graphTypes = {
       "change": "change",
@@ -88,37 +87,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       "volume": "volume"
     }
     this.stockData = JSON.stringify(processedStocks);
-    
-    // Event listener for responsiveness
-    window.addEventListener('resize', function(event){
-      worldMap.resize();
-      // relocateComponents(); ardadarda call the function
-      let svgWidth = parseFloat( d3Svg.style("width"));
-      let svgHeight = parseFloat(d3Svg.style('height'));
-      let xUk = svgWidth * xFactorUk, xUs = svgWidth * xFactorUs;
-      let yUk = svgHeight * yFactorUk, yUs = svgHeight * yFactorUs;
-      
-      d3Svg.select('.pie-UK')      
-        .attr("transform", ("translate(" + xUk + "," + yUk + ")"));
-      
-      d3Svg.select('.pie-US')      
-        .attr("transform", ("translate(" + xUs + "," + yUs + ")"));
-    });
-  }
-
-  public relocateComponents(){
-    let d3Svg = this.d3Svg;
-    let svgWidth = parseFloat( d3Svg.style("width"));
-    let svgHeight = parseFloat(d3Svg.style('height'));
-    let xUk = svgWidth * this.xFactorUk, xUs = svgWidth * this.xFactorUs;
-    let yUk = svgHeight * this.yFactorUk, yUs = svgHeight * this.yFactorUs;
-    // ardadarda this should be calculated on the map
-
-    d3Svg.select('.pie-UK')      
-      .attr("transform", ("translate(" + xUk + "," + yUk + ")"));
-    
-    d3Svg.select('.pie-US')      
-      .attr("transform", ("translate(" + xUs + "," + yUs + ")"));
   }
 
   public calculateReturn(targetObject){
@@ -130,7 +98,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       let initialPrice = v.values[0].close;
       let totalDailyReturn = 0;
       let totalVolume = 0;
-
       for(let i = 1 ; i < length ; i++){
         let currentValue = v.values[i];
         totalDailyReturn = totalDailyReturn + parseFloat(currentValue.daily_return);
@@ -353,7 +320,11 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         .style("fill", "black")
         .text((d : any) => {return d.data[0].country});
   }
-  
+
+  public setPieEvents(pies){
+
+  }
+
   public drawPieCharts(pieData, pieAttribute){
     
     /*
@@ -446,14 +417,16 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         .innerRadius(55)
         .outerRadius(55);
 
+
       pies
         .selectAll('path') 
         .append("text")
-        .style("text-anchor", "middle")
+        .text("HEY2")
+        .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
         .style("font-size", "25px")
-        .style("fill", "red")
-        .style("cursor", "pointer")
-        .text("HEY2");
+        .style("text-anchor", "middle")
+        .style("fill", "red");
+        
 
 
 /*
@@ -470,9 +443,10 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         .style("text-anchor", "middle")
         .style("fill", "black");*/
 
-
       
-      this.relocateComponents();
+      d3Svg.select('.pie-US').attr("transform", ('translate(265.88082345209335,239.93560787450036)'));
+      d3Svg.select('.pie-UK').attr("transform", ('translate(340.45715198133905,64.19898697182578) '));  
+      d3Svg.select('.pie-JP').attr("transform", ('translate(500,300) '));  
 
       function updatePieChart(countryData){
         let pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
@@ -536,11 +510,12 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
           exists: "#00599C",
           bubble: "#747474"
       },data: {
-        USA: { fillKey: "exists" },
-        GBR: { fillKey: "exists" }
+        'USA': { fillKey: "exists" },
+        'GBR': { fillKey: "exists" },
+        //'JPN': {fillKey: 'exists'}, toChange
       }
     });
-
+    
     worldMap.bubbles([
       {
         name: 'USA',
@@ -563,7 +538,18 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         highlightOnHover: false,
         highlightFillColor: 'bubble',
         highlightBorderColor: 'bubble'
-      }
+      }/* toChange
+      ,{
+        name: 'JPN',
+        radius: 5,
+        fillKey: 'bubble',
+        centered: 'SGP',
+        borderWidth: 0,
+        fillOpacity: 1,
+        highlightOnHover: false,
+        highlightFillColor: 'bubble',
+        highlightBorderColor: 'bubble'
+      }*/ 
     ]);
 
     worldMap.arc([
@@ -594,7 +580,21 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             animationSpeed: 1000,
             arcSharpness: 0
           }
-      }
+      },
+      /*{
+          origin: 'JPN',
+          destination: {
+          latitude: -30,
+          longitude: 60
+          },
+          options: {
+            strokeWidth: 3,
+            strokeColor: '#747474',
+            greatArc: false,
+            animationSpeed: 1000,
+            arcSharpness: 0
+          }
+      }*/
     ],  {strokeWidth: 1, arcSharpness: 1.4});
       return worldMap;
     }
