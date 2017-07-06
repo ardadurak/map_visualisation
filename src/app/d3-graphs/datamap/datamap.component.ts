@@ -41,10 +41,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
   private d3Svg: Selection<SVGSVGElement, any, null, undefined>;
   private processedStocks : any;
   private filteredStocks : any;
-  private xFactorUk: number;
-  private yFactorUk: number;
-  private xFactorUs: number;
-  private yFactorUs: number;
   private color : any;
   
   constructor(element: ElementRef, private ngZone: NgZone, d3Service: D3Service) {
@@ -78,7 +74,6 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     pieData = this.createPieData(processedStocks);
     this.drawPieCharts(pieData, pieAttribute);
     
-
     // Set parameters for the line graph
     this.graphTypes = {
       "change": "change",
@@ -89,7 +84,10 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     this.stockData = JSON.stringify(processedStocks);
   }
 
-  public calculateReturn(targetObject){
+  /*
+    CALCULATION AND PROCESSING FUNCTIONS
+  */
+  private calculateReturn(targetObject){
     // Copy the target object
     let resultObject = JSON.parse(JSON.stringify(targetObject));
 
@@ -111,7 +109,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       return v; 
     });
   }
-  public processCalculations(targetObject){
+  private processCalculations(targetObject){
     // Copy the target object
     let resultObject = JSON.parse(JSON.stringify(targetObject));
       
@@ -140,7 +138,10 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     });
   }
 
-  public createPieData(targetObject){
+  /*
+    PIE DATA FUNCTIONS
+  */
+  private createPieData(targetObject){
     // Copy the target object
     let resultObject = JSON.parse(JSON.stringify(targetObject));
 
@@ -181,90 +182,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     return groupedData;
   }
 
-  public filterStocks( targetObject, startDate, endDate){
-  
-    let startDateTime = startDate.setHours(0, 0, 0, 0);
-    let endDateTime = endDate.setHours(0, 0, 0, 0);
-
-    // Copy the target object
-    let filteredResultString = JSON.stringify(targetObject);
-    let filteredResult = JSON.parse(filteredResultString);
-
-    // Filter the result depending on the dates
-    filteredResult = filteredResult.map((v) => {
-        let filtered = v.values.filter(isBetweenDates);
-        v.values = filtered;
-        return v;
-    })
-    
-    function isBetweenDates(value) {
-      let currentDate = new Date(value.date).setHours(0, 0, 0, 0);
-      return (currentDate >= startDateTime && currentDate <= endDateTime);
-    }
-    
-    return filteredResult;
-  } 
-
-  public updateView(startDate, endDate) {
-
-    let filteredStocks = this.filterStocks(this.processedStocks, startDate, endDate);
-    filteredStocks = this.calculateReturn(filteredStocks);
-    let pieData = this.createPieData(filteredStocks);
-    let d3Svg = this.d3Svg;
-    let d3 = this.d3;
-    this.stockData = JSON.stringify(filteredStocks);
-    this.filteredStocks = filteredStocks;
-
-    /* this should come back ardadarda
-    pieData.map((v) => {
-      let pieSvg = d3Svg.selectAll('.pie-' + v.country_code);
-      pieSvg.select('.daily-text').text(v.averageDailyReturn); 
-      pieSvg.select('.average-text').text(v.averageReturn); 
-    });*/
-/*  TRANSITIONS
-     
-				 path = path.data(pie(frequency)); // update the data
-				  path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
-			function arcTween(a) {
-			  var i = d3.interpolate(this._current, a);
-			  this._current = i(0);
-			  return function(t) {
-			    return arc(i(t));
-			  };
-			}
-     
-     */ 
-  }
-
-  public drawPieChartStaticComponents(pies){
-
-    pies  
-      .append("circle")
-      .attr("cx", "4.6em")
-      .attr("cy", 0)
-      .attr("r", 25)
-      .attr("fill", '#747474')
-      .attr('stroke-opacity', 0);
-
-    pies  
-      .append("circle")
-      .attr("cx", "3.6em")
-      .attr("cy", "2.5em")
-      .attr("r", 20)
-      .attr("fill", '#747474')
-      .attr('stroke-opacity', 0);
-
-    pies
-      .append("text")
-      .attr("dx", "0")
-      .attr("dy", "0.5em")
-      .attr("class", "middle-text")
-      .style("text-anchor", "middle")
-      .style("fill", "white");
-
-  }
-
-  public drawPieChartDynamicComponents(pies){
+  private drawPieChartDynamicComponents(pies){
     
     let d3 = this.d3;
     let tooltip = d3.select(".datamaps-hoverover");
@@ -294,7 +212,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .append("text")
       .attr("dy", "4em")
       .attr("dx", "5.2em")
-      .attr("class", "average-text")
+      .attr("class", "daily-text")
       .style("text-anchor", "middle")
       .style("font-size", "10px")
       .style("fill", "white")
@@ -321,59 +239,12 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         .text((d : any) => {return d.data[0].country});
   }
 
-  public setPieEvents(pies){
-
-  }
-
-  public drawPieCharts(pieData, pieAttribute){
-    
-    /*
-    pieData.map((v) => {
-      this.d3Svg.selectAll('.pie-' + v.country_code).remove();
-    });*/
-
-    let d3 = this.d3, d3Svg = this.d3Svg;
+  private bindSliceEvents(slices, pieAttribute){
+    let d3 = this.d3;
+    let d3Svg = this.d3Svg;
     let tooltip = d3.select(".datamaps-hoverover");
-    let color = this.color;
-    
-    var arc : any = d3.arc()
-       .innerRadius(20)
-       .outerRadius(40);
 
-    var pie = d3.pie()
-      .value(function(d: any){ return d[pieAttribute] });
-
-    var pies = d3Svg.selectAll('.pie')
-      .data(pieData)
-      .enter()
-      .append<SVGGElement>('g')
-      .attr('class', 'pie')
-      .attr('class', function(d: any){  return 'pie-' + d.data[0].country_code})
-    
-     pies  
-      .append("circle")
-      .attr("cx", 0)
-      .attr("cy", 0)
-      .attr("r", 50)
-      .attr("fill", '#747474')
-      .attr('stroke-opacity', 0)
-      .style('cursor', 'pointer')
-      .on('click', function(d : any) { 
-          updatePieChart(d);
-      });
-      
-    this.drawPieChartStaticComponents(pies);
-    this.drawPieChartDynamicComponents(pies);
-
-    pies.selectAll('.slice')
-      .data(function(d: any){
-         return pie(d.data) })
-      .enter()
-      .append<SVGGElement>('path')
-      .attr('d',  arc)
-      .style('cursor', 'pointer')
-      .style('fill', (d : any) => this.color(d.data.id))
-      .on('mouseover', function(d : any) {  
+    slices.on('mouseover', function(d : any) {  
         let content = '<div class="hoverinfo">' + '<strong>' + d.data.name + '</strong> <br>'
                 + 'Value <strong>' + d.data[pieAttribute] + '</strong> <br>'
                 + 'Periodic Return: <strong>' + d.data.average_return + '%</strong> <br>'
@@ -409,60 +280,105 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             .selectAll('.pie-' + d.data.country_code)
             .select(".middle-text" )
             .text('');
-        }).on('click', function(d : any) { 
-          drawDrilledPieChart(d);
         });
+        
+  }
 
+  private drawPieCharts(pieData, pieAttribute){
+    let d3 = this.d3, d3Svg = this.d3Svg;
+    let tooltip = d3.select(".datamaps-hoverover");
+    let color = this.color;
+    
+    var arc : any = d3.arc().innerRadius(20).outerRadius(40);
+    var pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
+
+    var pies = d3Svg.selectAll('.pie')
+      .data(pieData)
+      .enter()
+      .append<SVGGElement>('g')
+      .attr('class', 'pie')
+      .attr('class', function(d: any){  return 'pie-' + d.data[0].country_code})
+    
+     pies  
+      .append("circle")
+      .attr("class", "back-circle")
+      .attr("cx", 0)
+      .attr("cy", 0)
+      .attr("r", 50)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0)
+      .style('cursor', 'pointer')
+      .on('click', function(d : any) { 
+          updatePieChart(d);
+      });
+      
+    this.drawPieChartStaticComponents(pies);
+    this.drawPieChartDynamicComponents(pies);
+    
+    let slices = pies.selectAll('.slice')
+      .data(function(d: any){
+         return pie(d.data) })
+      .enter()
+      .append<SVGGElement>('path')
+      .attr('d',  arc)
+      .style('cursor', 'pointer')
+      .style('fill', (d : any) => this.color(d.data.id));
+      
+      this.bindSliceEvents(slices, pieAttribute); 
+      slices.on('click', function(d : any) { 
+        drawDrilledPieChart(d);
+      });
+
+      // ardadarda label arcs should be added  
       var labelArc : any = d3.arc()
         .innerRadius(55)
         .outerRadius(55);
 
-
       pies
         .selectAll('path') 
         .append("text")
-        .text("HEY2")
-        .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-        .style("font-size", "25px")
-        .style("text-anchor", "middle")
-        .style("fill", "red");
-        
-
-
-/*
-       pies
-        .selectAll('path') 
-        .append("text")
         .text(function(d : any) { 
-          console.log((Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%');
-            console.log("translate(" + labelArc.centroid(d) + ")");
-            return (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%';
-          })
+          return (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%';
+        })
         .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
         .style("font-size", "25px")
         .style("text-anchor", "middle")
-        .style("fill", "black");*/
+        .style("fill", "black");
+        
+        // Locate pie charts
+        d3Svg.select('.pie-US').attr("transform", ('translate(265.88082345209335,239.93560787450036)'));
+        d3Svg.select('.pie-UK').attr("transform", ('translate(340.45715198133905,64.19898697182578) '));  
+        // d3Svg.select('.pie-JP').attr("transform", ('translate(500,300) '));  tochange
 
-      
-      d3Svg.select('.pie-US').attr("transform", ('translate(265.88082345209335,239.93560787450036)'));
-      d3Svg.select('.pie-UK').attr("transform", ('translate(340.45715198133905,64.19898697182578) '));  
-      d3Svg.select('.pie-JP').attr("transform", ('translate(500,300) '));  
 
       function updatePieChart(countryData){
+
         let pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
         let currentPie = d3Svg
           .selectAll('.pie-' + countryData.data[0].country_code)
           .data([countryData])
-
-        currentPie.selectAll('.slice')
+          
+        let slices = currentPie.selectAll('.slice')
           .data(function(d: any){
-            debugger;
             return pie(d.data) })
           .enter()
           .append<SVGGElement>('path')
           .attr('d',  arc)
           .style('cursor', 'pointer')
           .style('fill', (d: any) => color(d.data.id));
+   
+          slices.on('click', function(d : any) { 
+            drawDrilledPieChart(d);
+          });
+
+
+          
+         [countryData].map((v) => {
+          let pieSvg = d3Svg.selectAll('.pie-' + v.data[0].country_code);
+          pieSvg.select('.daily-text').text(v.additionalData.pie_average_daily_return); 
+          pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
+          pieSvg.select('.top-text').text(v.data[0].country_code); 
+        });  
       }
 
       function drawDrilledPieChart(stockData){
@@ -491,11 +407,48 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
               .style('left', ( d3.event.pageX) + "px")
               .style('top', ( (d3.event.pageY - 150)) + "px")
               .style("display", "inline-block");
-          })
+          });
+
+          [stockData].map((v) => {
+            let pieSvg = d3Svg.selectAll('.pie-' + v.data.country_code);
+            pieSvg.select('.daily-text').text(v.data.average_daily_return); 
+            pieSvg.select('.average-text').text(v.data.average_return); 
+            pieSvg.select('.top-text').text(v.data.name); 
+          }); 
       }
       
   }
+  private drawPieChartStaticComponents(pies){
 
+    pies  
+      .append("circle")
+      .attr("cx", "4.6em")
+      .attr("cy", 0)
+      .attr("r", 25)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0);
+
+    pies  
+      .append("circle")
+      .attr("cx", "3.6em")
+      .attr("cy", "2.5em")
+      .attr("r", 20)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0);
+
+    pies
+      .append("text")
+      .attr("dx", "0")
+      .attr("dy", "0.5em")
+      .attr("class", "middle-text")
+      .style("text-anchor", "middle")
+      .style("fill", "white");
+
+  }
+
+  /*
+    MAP FUNCTIONS
+  */
   private initMap(){
     var worldMap =  new Datamap({
       element: document.getElementById('map'),
@@ -512,7 +465,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       },data: {
         'USA': { fillKey: "exists" },
         'GBR': { fillKey: "exists" },
-        //'JPN': {fillKey: 'exists'}, toChange
+        //'JPN': {fillKey: 'exists'}, tochange
       }
     });
     
@@ -538,7 +491,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         highlightOnHover: false,
         highlightFillColor: 'bubble',
         highlightBorderColor: 'bubble'
-      }/* toChange
+      }/* tochange
       ,{
         name: 'JPN',
         radius: 5,
@@ -581,7 +534,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             arcSharpness: 0
           }
       },
-      /*{
+      /*{ tochange
           origin: 'JPN',
           destination: {
           latitude: -30,
@@ -599,7 +552,9 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       return worldMap;
     }
 
-
+  /*
+    DATE CHANGE FUNCTIONS
+  */
   ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
     
     var startDate = changes['startDate'] ?  changes['startDate'].currentValue : this.startDate;
@@ -614,8 +569,63 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  private formatNumber = function(value){
-    return  (Math.round(value * 100 ) / 100 );
+ private filterStocks( targetObject, startDate, endDate){
+
+    let startDateTime = startDate.setHours(0, 0, 0, 0);
+    let endDateTime = endDate.setHours(0, 0, 0, 0);
+
+    // Copy the target object
+    let filteredResultString = JSON.stringify(targetObject);
+    let filteredResult = JSON.parse(filteredResultString);
+
+    // Filter the result depending on the dates
+    filteredResult = filteredResult.map((v) => {
+        let filtered = v.values.filter(isBetweenDates);
+        v.values = filtered;
+        return v;
+    })
+    
+    function isBetweenDates(value) {
+      let currentDate = new Date(value.date).setHours(0, 0, 0, 0);
+      return (currentDate >= startDateTime && currentDate <= endDateTime);
+    }
+    
+    return filteredResult;
+  } 
+
+  private updateView(startDate, endDate) {
+
+    let filteredStocks = this.filterStocks(this.processedStocks, startDate, endDate);
+    filteredStocks = this.calculateReturn(filteredStocks);
+    let pieData = this.createPieData(filteredStocks);
+    let d3Svg = this.d3Svg;
+    let d3 = this.d3;
+    this.stockData = JSON.stringify(filteredStocks);
+    this.filteredStocks = filteredStocks;
+    var arc : any = d3.arc().innerRadius(20).outerRadius(40);
+    var pie = d3.pie().value(function(d: any){ return d[this.pieAttribute] });
+
+    pieData.map((v) => {
+      let pieSvg = d3Svg.selectAll('.pie-' + v.data[0].country_code);
+      pieSvg.select('.daily-text').text(v.additionalData.pie_average_daily_return); 
+      pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
+      pieSvg.select('.top-text').text(v.data[0].country_code); 
+    });
+    
+    let pies = d3.pie().value(function(d: any){ return d[this.pieAttribute] });
+      let currentPie = d3Svg
+        .selectAll('.pies')
+        .data(filteredStocks)
+        
+      let slices = currentPie.selectAll('.slice')
+        .data(function(d: any){
+          return pie(d.data) })
+        .enter()
+        .append<SVGGElement>('path')
+        .attr('d',  arc)
+        .style('cursor', 'pointer')
+        .style('fill', (d: any) => this.color(d.data.id));
+  
   }
 
 }
