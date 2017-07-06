@@ -40,11 +40,10 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
     let y: ScaleLinear<number, number>; //   y;
     let xAxis: any;
     let yAxis: any;
-    let margin: any; 
+    let margin: any;  
     let line; 
     let dateData: any;
     let graphAttribute = this.graphAttribute;
-    let color = d3.scaleOrdinal(d3.schemeCategory10);
     this.updateFunction = updateGraph;
     if (this.parentNativeElement !== null) {
       d3ParentElement = d3.select(this.parentNativeElement);
@@ -72,7 +71,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
       yAxis  = d3.axisLeft(y)
    
       if(graphAttribute === "volume"){
-        var format = d3.formatPrefix(",.0", 1e6);
+        let format = d3.formatPrefix(",.0", 1e6);
         yAxis.tickFormat (function (d) { return format(d)});
       }  
       
@@ -105,7 +104,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         
       drawLines(processedStocks);
       
-      var focus = d3Svg.append("g")
+      let focus = d3Svg.append("g")
           .attr("class", "focus")
           .style("display", "none");
 
@@ -113,7 +112,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         //debugger;
         let bisectDate = d3.bisector(function(d : any) { return d.date; }).left;
         let x0 : any = new Date(x.invert(d3.mouse(this)[0]));
-        var valueData = processedStocks[0].values;
+        let valueData = processedStocks[0].values;
         let i = bisectDate(valueData, x0, 1);
         let d0 = valueData[i - 1];
         let d1 = valueData[i];
@@ -121,9 +120,9 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
 
         console.log(d);
         
-        //var i = this.stock(processedStocks, x0, 1);
-        //var d0 = d3G.data[i - 1];
-        //var d1 = d3G.data[i];
+        //let i = this.stock(processedStocks, x0, 1);
+        //let d0 = d3G.data[i - 1];
+        //let d1 = d3G.data[i];
         
         //console.log("d0" + d0);
           //console.log("d1" + d1);
@@ -192,9 +191,9 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
             .call(yAxis);
     }
 
-    let tooltip = d3.select(".datamaps-hoverover"); 
-
     function drawLines(targetData){
+      let colorArray = ["#ff9900", "#3366cc", "#dc3912", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
+      let tooltip = d3.select(".datamaps-hoverover"); 
       let stock = d3G.selectAll(".stock")
         .data(targetData)
         .enter().append<SVGGElement>('g')
@@ -230,7 +229,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
 
       stock.append('path')
         .attr("d", (d : any) => line(d.values) )
-        .style("stroke", (d : any) => color(d.id))
+        .style("stroke", (d : any) => colorArray[d.id])
         .attr("class", (d: any) => "line line-" + d.country_code + " line-" + d.ticker_symbol) ;
 
       stock.append('text')
@@ -240,7 +239,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
         .attr("dy", "0.35em")
         .style('cursor', 'pointer')
         .style("font", "14px sans-serif")
-        .style("fill", (d : any) => color(d.id))
+        .style("fill", (d : any) => colorArray[d.id])
         .attr('class', function(d,i: any){
             return ("graph-text-" + i + "-" + d.ticker_symbol);
         })

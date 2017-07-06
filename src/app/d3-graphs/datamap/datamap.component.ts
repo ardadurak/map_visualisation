@@ -42,6 +42,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
   private processedStocks : any;
   private filteredStocks : any;
   private color : any;
+  private colorArray : any;
   private pieAttribute: any;
   
   constructor(element: ElementRef, private ngZone: NgZone, d3Service: D3Service) {
@@ -64,7 +65,9 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let worldMap : any = this.initMap();
     let pieData : any;   
     let pieAttribute = this.pieAttribute =  "main_pie_data";
+    // will change
     this.color = d3.scaleOrdinal(d3.schemeCategory10);
+    this.colorArray = ["#ff9900", "#3366cc", "#dc3912", "#109618", "#990099", "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395", "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6", "#3b3eac"];
     
      // Initialize the canvas and draw the pie charts
     d3ParentElement = d3.select(this.parentNativeElement);
@@ -229,13 +232,13 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             .select(".middle-text" )
             .text('');
         });
-        
+      return slices; 
   }
 
   private drawPieCharts(pieData, pieAttribute){
     let d3 = this.d3, d3Svg = this.d3Svg;
     let tooltip = d3.select(".datamaps-hoverover");
-    let color = this.color;
+    let colorArray = this.colorArray;
     let tempSelf = this;
 
     var arc : any = d3.arc().innerRadius(20).outerRadius(40);
@@ -270,7 +273,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .append<SVGGElement>('path')
       .attr('d',  arc)
       .style('cursor', 'pointer')
-      .style('fill', (d : any) => this.color(d.data.id));
+      .style('fill', (d : any) => this.colorArray[d.data.id])
       
     this.bindSliceEvents(slices, pieAttribute); 
     this.updatePieTexts(pieData);
@@ -283,9 +286,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     var labelArc : any = d3.arc()
       .innerRadius(55)
       .outerRadius(55);
-      
-    pies
-      .selectAll('path') 
+    
+    slices
       .append("text")
       .text(function(d : any) { 
         return (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%';
@@ -294,7 +296,15 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .style("font-size", "25px")
       .style("text-anchor", "middle")
       .style("fill", "black");
-      
+     slices
+      .append("text")
+      .text("ELLEH")
+      .attr("dx", "2em")
+      .attr("dy", "2em")
+      .style("font-size", "25px")
+      .style("text-anchor", "middle")
+      .style("fill", "red");
+
       // Locate pie charts
       d3Svg.select('.pie-US').attr("transform", ('translate(265.88082345209335,239.93560787450036)'));
       d3Svg.select('.pie-UK').attr("transform", ('translate(340.45715198133905,64.19898697182578) '));  
@@ -316,7 +326,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let d3 = tempSelf.d3;
     let d3Svg = tempSelf.d3Svg;
     let arc : any = d3.arc().innerRadius(20).outerRadius(40);
-    let color = d3.scaleOrdinal(d3.schemeCategory10);
+    let colorArray = tempSelf.colorArray;
 
     let pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
     let currentPie = d3Svg
@@ -329,9 +339,12 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         return pie(d.data) })
       .enter()
       .append('path')
-      .attr('d',  arc)
-      .style('cursor', 'pointer')
-      .style('fill', (d: any) => color(d.data.id));
+      .style('fill', (d: any) => colorArray[d.data.id])
+      //.transition()
+      //.duration(500)
+      //.attrTween("d", arcTween)
+      .attr("d", arc)
+      .style('cursor', 'pointer');
 
     tempSelf.bindSliceEvents(slices, pieAttribute);  
     
@@ -345,6 +358,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
         pieSvg.select('.top-text').text(v.data[0].country_code); 
       }); 
+
+      function arcTween(d) {
+        var i = d3.interpolate(this._current, d);
+        this._current = i(0);
+        return function(t) {
+          return arc(i(t))
+        }
+      }
   }
 
   // FUNCTION FOR PIE CHART DRILL
@@ -366,9 +387,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         return pieNew(stockData.data.drilled_pie_data) })
       .enter()
       .append<SVGGElement>('path')
-      .attr('d',  arc)
-      .style('cursor', 'pointer')
       .style('fill', (d, i: any) => color(i))
+      .style('cursor', 'pointer')
       .on('mouseover', function(d : any) { 
         let content = '<div class="hoverinfo">' + d.data.name + '<br>' +
           ' Value: <strong>' + d.data.value + '</strong><br> ' +
@@ -377,14 +397,24 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
           .style('left', ( d3.event.pageX) + "px")
           .style('top', ( (d3.event.pageY - 150)) + "px")
           .style("display", "inline-block");
-      });
-
+      }).transition()
+      .duration(500)
+      .attrTween("d", arcTween);
+      
       [stockData].map((v) => {
         let pieSvg = d3Svg.selectAll('.pie-' + v.data.country_code);
         pieSvg.select('.daily-text').text(v.data.average_daily_return); 
         pieSvg.select('.average-text').text(v.data.average_return); 
         pieSvg.select('.top-text').text(v.data.name); 
       }); 
+
+      function arcTween(d) {
+        var i = d3.interpolate(this._current, d);
+        this._current = i(0);
+        return function(t) {
+          return arc(i(t))
+        }
+      }
   }
   
   private drawPieChartStaticComponents(pies){
@@ -463,7 +493,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       },data: {
         'USA': { fillKey: "exists" },
         'GBR': { fillKey: "exists" },
-        //'JPN': {fillKey: 'exists'}, tochange
+        //'JPN': {fillKey: 'exists'}, // tochange
       }
     });
     
@@ -489,8 +519,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         highlightOnHover: false,
         highlightFillColor: 'bubble',
         highlightBorderColor: 'bubble'
-      }/* tochange
-      ,{
+      } //tochange
+      /* ,{
         name: 'JPN',
         radius: 5,
         fillKey: 'bubble',
@@ -531,8 +561,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
             animationSpeed: 1000,
             arcSharpness: 0
           }
-      },
-      /*{ tochange
+      },// tochange 
+      /*{ 
           origin: 'JPN',
           destination: {
           latitude: -30,
