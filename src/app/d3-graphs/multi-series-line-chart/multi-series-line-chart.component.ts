@@ -44,7 +44,7 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
     let line; 
     let dateData: any;
     let graphAttribute = this.graphAttribute;
-    let color = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"];
+    let color = d3.scaleOrdinal(d3.schemeCategory10);
     this.updateFunction = updateGraph;
     if (this.parentNativeElement !== null) {
       d3ParentElement = d3.select(this.parentNativeElement);
@@ -230,17 +230,17 @@ export class MultiSeriesLineChartComponent implements OnInit, OnDestroy {
 
       stock.append('path')
         .attr("d", (d : any) => line(d.values) )
-        .style("stroke", (d : any) => color[d.id])
+        .style("stroke", (d : any) => color(d.id))
         .attr("class", (d: any) => "line line-" + d.country_code + " line-" + d.ticker_symbol) ;
 
       stock.append('text')
         .datum(function(d : any) { return {id: d.id, ticker_symbol: d.ticker_symbol, value: d.values[d.values.length - 1]}; })
         .attr("transform", (d) => "translate(270," + (d.id * 20) + ")" )
         .attr("x", 3)
-        .attr("dy", "1.35em")
+        .attr("dy", "0.35em")
         .style('cursor', 'pointer')
         .style("font", "14px sans-serif")
-        .style("fill", (d : any) => color[d.id])
+        .style("fill", (d : any) => color(d.id))
         .attr('class', function(d,i: any){
             return ("graph-text-" + i + "-" + d.ticker_symbol);
         })

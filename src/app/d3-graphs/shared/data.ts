@@ -9,6 +9,8 @@ export const Stocks =
     "country": "United States",
     "isin": "US0378331005",
     "cusip": "037833100",
+    "main_pie_data": 10,
+    "drilled_pie_data": [{"name":"A", "value":10},{"name":"B", "value":20},{"name":"C", "value":30}],
     "average_volume": 0,"average_return": 0,"average_daily_return": 0,"min_daily_return": 0,"max_daily_return": 0,
     "values": [
       {
@@ -2552,6 +2554,8 @@ export const Stocks =
     "country_code": "UK",
     "isin": "US06738E2046",
     "cusip": "06738E204",
+    "main_pie_data": 40,
+    "drilled_pie_data": [{"name":"A", "value":10},{"name":"B", "value":10},{"name":"C", "value":60}],
     "average_volume": 0,"average_return": 0,"average_daily_return": 0,"min_daily_return": 0,"max_daily_return": 0,
     "values": [
       {
@@ -5105,6 +5109,8 @@ export const Stocks =
     "country_code": "UK",
     "isin": "US1104481072",
     "cusip": "110448107",
+    "main_pie_data": 10,
+    "drilled_pie_data": [{"name":"A", "value":10},{"name":"B", "value":10},{"name":"C", "value":40},{"name":"D", "value":70}],
     "average_volume": 0,"average_return": 0,"average_daily_return": 0,"min_daily_return": 0,"max_daily_return": 0,
     "values": [
       {
@@ -7658,6 +7664,8 @@ export const Stocks =
     "country": "United States",
     "isin": "US4592001014",
     "cusip": "459200101",
+    "main_pie_data": 20,
+    "drilled_pie_data": [{"name":"A", "value":10},{"name":"B", "value":10},{"name":"C", "value":20},{"name":"D", "value":30}],
     "average_volume": 0,"average_return": 0,"average_daily_return": 0,"min_daily_return": 0,"max_daily_return": 0,
     "values": [
       {

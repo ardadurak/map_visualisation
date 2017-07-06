@@ -8,7 +8,6 @@ import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-li
 @Component({
   selector: 'app-datamap',
   template: `
-    
     <div class="row">
       <div class="col col-lg-7 col-md-12 col-sm-12">
         <div id="map" class="map" style="position: relative; width: 100%; height: 100%;"></div>
@@ -21,7 +20,6 @@ import { WrapperMultiSeriesLineChartComponent } from '../wrapper-multi-series-li
         </div>
       </div>
    </div>
-    
   `
 })
 @NgModule({
@@ -41,16 +39,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
   private parentNativeElement: any;
   private d3ParentElement: any;
   private d3Svg: Selection<SVGSVGElement, any, null, undefined>;
-  private d3SvgGraph: Selection<SVGSVGElement, any, null, undefined>;
-  private d3SvgDetails: Selection<SVGSVGElement, any, null, undefined>;
   private processedStocks : any;
   private filteredStocks : any;
   private xFactorUk: number;
   private yFactorUk: number;
   private xFactorUs: number;
   private yFactorUs: number;
+  private color : any;
   
-
   constructor(element: ElementRef, private ngZone: NgZone, d3Service: D3Service) {
     this.d3 = d3Service.getD3();
     this.parentNativeElement = element.nativeElement;
@@ -67,28 +63,24 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let d3 = this.d3;
     let d3ParentElement: Selection<HTMLElement, any, null, undefined>;
     let d3Svg: Selection<SVGSVGElement, any, null, undefined>;
-    let d3SvgGraph: Selection<SVGSVGElement, any, null, undefined>;
-    let d3SvgDetails: Selection<SVGSVGElement, any, null, undefined>;
     let d3G: Selection<SVGGElement, any, null, undefined>;
-    let svgWidth: number, svgHeight: number;
     const xFactorUk = this.xFactorUk = 0.4859626225320041, yFactorUk = this.yFactorUk = 0.16291388766840606;
     const xFactorUs = this.xFactorUs = 0.3795136671202318, yFactorUs = this.yFactorUs = 0.608870085225356;
-    let map = this.initMap();
+    let worldMap = this.initMap();
     let relocate = this.relocateComponents;
-    let pieData : any;
-    let processedStocks : any;
-    let graphTypes = this.graphTypes;
-        
-    processedStocks = this.processedStocks = this.processCalculations(Stocks);
-    this.stockData = JSON.stringify(processedStocks);
-    pieData = this.createPieData(processedStocks);
-   
+    let pieData : any;   
+    let pieAttribute = "main_pie_data";
+    this.color = d3.scaleOrdinal(d3.schemeCategory10);
+     // Initialize the canvas and draw the pie charts
     d3ParentElement = d3.select(this.parentNativeElement);
     d3Svg = this.d3Svg = d3ParentElement.select<SVGSVGElement>('svg');
-    d3SvgGraph = this.d3SvgGraph = d3ParentElement.select<SVGSVGElement>('.graph');
-    d3SvgDetails = this.d3SvgDetails = d3ParentElement.select<SVGSVGElement>('.details');
+
+    // Processing the stock data
+    let processedStocks = this.processedStocks = this.processCalculations(Stocks);
+    pieData = this.createPieData(processedStocks);
+    this.drawPieCharts(pieData, pieAttribute);
     
-    this.drawPieCharts(pieData);
+    // Set parameters for the line graph
     this.graphTypes = {
       "change": "change",
       "daily_return": "daily_return",
@@ -97,18 +89,19 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     }
     this.stockData = JSON.stringify(processedStocks);
     
+    // Event listener for responsiveness
     window.addEventListener('resize', function(event){
-      map.resize();
-      
+      worldMap.resize();
+      // relocateComponents(); ardadarda call the function
       let svgWidth = parseFloat( d3Svg.style("width"));
       let svgHeight = parseFloat(d3Svg.style('height'));
       let xUk = svgWidth * xFactorUk, xUs = svgWidth * xFactorUs;
       let yUk = svgHeight * yFactorUk, yUs = svgHeight * yFactorUs;
-    
-      d3Svg.select('.pie-uk')      
+      
+      d3Svg.select('.pie-UK')      
         .attr("transform", ("translate(" + xUk + "," + yUk + ")"));
       
-      d3Svg.select('.pie-us')      
+      d3Svg.select('.pie-US')      
         .attr("transform", ("translate(" + xUs + "," + yUs + ")"));
     });
   }
@@ -119,32 +112,31 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let svgHeight = parseFloat(d3Svg.style('height'));
     let xUk = svgWidth * this.xFactorUk, xUs = svgWidth * this.xFactorUs;
     let yUk = svgHeight * this.yFactorUk, yUs = svgHeight * this.yFactorUs;
-    //ardadarda
+    // ardadarda this should be calculated on the map
 
-    d3Svg.select('.pie-uk')      
+    d3Svg.select('.pie-UK')      
       .attr("transform", ("translate(" + xUk + "," + yUk + ")"));
     
-    d3Svg.select('.pie-us')      
+    d3Svg.select('.pie-US')      
       .attr("transform", ("translate(" + xUs + "," + yUs + ")"));
   }
 
   public calculateReturn(targetObject){
     // Copy the target object
-    let resultString = JSON.stringify(targetObject);
-    let resultObject = JSON.parse(resultString);
+    let resultObject = JSON.parse(JSON.stringify(targetObject));
 
     return resultObject.map((v) => {
-      var length = v.values.length;
-      let initialPrice = v.values[0].close ;
+      let length = v.values.length;
+      let initialPrice = v.values[0].close;
       let totalDailyReturn = 0;
       let totalVolume = 0;
+
       for(let i = 1 ; i < length ; i++){
         let currentValue = v.values[i];
         totalDailyReturn = totalDailyReturn + parseFloat(currentValue.daily_return);
         totalVolume = totalVolume + parseFloat(currentValue.volume);
         v.values[i].change = parseFloat((Math.round(((currentValue.close-initialPrice) / initialPrice) * 100 * 100) / 100 ).toFixed(2));  // change rate value
       }
-       
       v.average_daily_return = parseFloat((totalDailyReturn / length).toFixed(2));
       v.average_volume = parseFloat((Math.round((totalVolume / length) * 100 ) / 100 ).toFixed(2));
       v.average_return = (Math.round((Math.pow(((v.average_daily_return / 100) + 1 ), length) - 1) * 100 * 100)/ 100);
@@ -154,15 +146,13 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
   }
   public processCalculations(targetObject){
     // Copy the target object
-    let resultString = JSON.stringify(targetObject);
-    let resultObject = JSON.parse(resultString);
+    let resultObject = JSON.parse(JSON.stringify(targetObject));
       
     return resultObject.map((v) => {
       var length = v.values.length;
       let initialPrice = parseFloat(v.values[0].close) ;
       let totalDailyReturn = 0;
       let totalVolume = 0;
-
       for(let i = 1 ; i < length ; i++){
         v.values[i].close = parseFloat( v.values[i].close);
         v.values[i].volume = parseFloat( v.values[i].volume);
@@ -184,106 +174,44 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   public createPieData(targetObject){
-    let resultString = JSON.stringify(targetObject);
-    let resultObject = JSON.parse(resultString);
+    // Copy the target object
+    let resultObject = JSON.parse(JSON.stringify(targetObject));
 
-    let ukStocks = resultObject.filter(function(v) {
-      return v.country_code == "UK"; 
-    });
-
-    let usStocks = resultObject.filter(function(v) {
-      return v.country_code == "US"; 
-    });
-
-    /*
-    
-    ukStocks.reduce((v), (element, total) =>{
-      console.log("Element: " + element);
-      console.log("Total: " + total);
-    })
-    let ukStocksPieData = ukStocks.map((v)=> {
-        return { 
-          "ticker_symbol" : v.ticker_symbol,
-          "name": v.name,
-          "value": v.values[v.length-1].close
+    // returns object
+    let groupBy = function(data, attribute) {
+      let result = data.reduce(function(rv, x) {
+        (rv[x[attribute]] = rv[x[attribute]] || []).push(x);
+        return rv;
+      }, {});
+      let pieArray = [];
+      for (const key of Object.keys(result)) {
+        let data = result[key]
+        let dataLength = data.length;
+        let totalAverageDailyReturn = 0, totalAverageReturn = 0, total_main_pie_data = 0;
+       
+        data.map(v => {
+          totalAverageDailyReturn = totalAverageDailyReturn + v.average_daily_return;
+          totalAverageReturn = totalAverageReturn + v.average_return;
+          total_main_pie_data = total_main_pie_data + v.main_pie_data;
+       });
+        let additionalData = {
+          "total_main_pie_data": total_main_pie_data,
+          "pie_average_daily_return": Math.round((totalAverageDailyReturn / dataLength) * 100) / 100,
+          "pie_average_return": Math.round((totalAverageReturn / dataLength) * 100) / 100,
         }
-    })*/
-    /*function createObject(target){
 
-    }
-*/
-    /*
-      toBeChanged
-        function getChartData(targetArray, targetCountry){
-      return { 
-        "country": targetCountry, 
-        "averageDailyReturn" : ((parseFloat(targetArray[0].average_daily_return) + parseFloat(targetArray[1].average_daily_return)) / 2).toFixed(2), 
-        "averageReturn" : ((parseFloat(targetArray[0].average_return) + parseFloat(targetArray[1].average_return)) / 2).toFixed(2), 
-        "data" : targetArray.map((v) => {
-                return { 
-                  "ticker_symbol" : v.ticker_symbol,
-                  "name": v.name,
-                  "value": v.values[v.length-1].close
-                }
-            })
-      };
-    }
-   
-    let chartObject = [ getChartData(ukStocks, "uk"), getChartData(usStocks, "us") ];
-    */ 
-    let chartObject = [ 
-      { 
-        "country": "uk", 
-        "averageDailyReturn" : ((parseFloat(ukStocks[0].average_daily_return) + parseFloat(ukStocks[1].average_daily_return)) / 2).toFixed(2), 
-        "averageReturn" : ((parseFloat(ukStocks[0].average_return) + parseFloat(ukStocks[1].average_return)) / 2).toFixed(2), 
-        "data" :[
-          {
-            "country_code": "uk", 
-            "id": ukStocks[0].id,
-            "ticker_symbol": ukStocks[0].ticker_symbol,
-            "name": ukStocks[0].name,
-            "value": ukStocks[0].values[ukStocks.length-1].close,
-            "averageDailyReturn": parseFloat(ukStocks[0].average_daily_return),
-            "averageReturn": parseFloat(ukStocks[0].average_return)
-          },
-          {
-            "country_code": "uk", 
-            "id": ukStocks[1].id,
-            "ticker_symbol": ukStocks[1].ticker_symbol,
-            "name": ukStocks[1].name,
-            "value": ukStocks[1].values[ukStocks.length-1].close,
-            "averageDailyReturn": parseFloat(ukStocks[1].average_daily_return),
-            "averageReturn": parseFloat(ukStocks[1].average_return)
-          },
-        ]
-      },
-      { 
-        "country": "us", 
-        "averageDailyReturn" : ((parseFloat(usStocks[0].average_daily_return) + parseFloat(usStocks[1].average_daily_return)) / 2).toFixed(2), 
-        "averageReturn" : ((parseFloat(usStocks[0].average_return) + parseFloat(usStocks[1].average_return)) / 2).toFixed(2), 
-        "data" :[
-          {
-            "country_code": "us", 
-            "id": usStocks[0].id,
-            "ticker_symbol": usStocks[0].ticker_symbol,
-            "name": usStocks[0].name,
-            "value": usStocks[0].values[usStocks.length-1].close,
-            "averageDailyReturn": parseFloat(usStocks[0].average_daily_return),
-            "averageReturn": parseFloat(usStocks[0].average_return)
-          },
-          {
-            "country_code": "us", 
-            "id": usStocks[1].id,
-            "ticker_symbol": usStocks[1].ticker_symbol,
-            "name": usStocks[1].name,
-            "value": usStocks[1].values[usStocks.length-1].close,
-            "averageDailyReturn": parseFloat(usStocks[1].average_daily_return),
-            "averageReturn": parseFloat(usStocks[1].average_return)
-          },
-        ]
+        let singlePieData = {
+          "additionalData" : additionalData,
+          "data": data
+        }
+        pieArray.push(singlePieData);
       }
-     ];
-    return chartObject;
+      console.log(pieArray);
+      return pieArray;
+    };   
+    
+    let groupedData = groupBy(targetObject, 'country_code');
+    return groupedData;
   }
 
   public filterStocks( targetObject, startDate, endDate){
@@ -310,7 +238,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     return filteredResult;
   } 
 
-  public changeFunction(startDate, endDate) {
+  public updateView(startDate, endDate) {
 
     let filteredStocks = this.filterStocks(this.processedStocks, startDate, endDate);
     filteredStocks = this.calculateReturn(filteredStocks);
@@ -319,55 +247,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let d3 = this.d3;
     this.stockData = JSON.stringify(filteredStocks);
     this.filteredStocks = filteredStocks;
-    
-    /*
-    console.log("Filtered Stocks Length: " + filteredStocks[0].values.length);
-    console.log("Filtered Stocks Average Return: " + filteredStocks[0].average_return);
-    console.log("Filtered Stocks Average Daily Return: " + filteredStocks[0].average_daily_return);
-    console.log("Pie Data: " + pieData);
-    */
-    
-    d3Svg.selectAll('.pie-uk').select('.daily-text').text(pieData[0].averageDailyReturn); 
-    d3Svg.selectAll('.pie-us').select('.daily-text').text(pieData[1].averageDailyReturn); 
-   
-    d3Svg.selectAll('.pie-uk').select('.average-text').text(pieData[0].averageReturn)
-    d3Svg.selectAll('.pie-us').select('.average-text').text(pieData[1].averageReturn)
-    
-    this.drawPieCharts(pieData);
-    this.relocateComponents();
-   /* 
-    let arc : any= d3.arc()
-      .outerRadius(40)
-      .innerRadius(20);
 
-    let pie = d3.pie()
-      .value(function(d: any){  return d.value });
-    
-    d3.selectAll('.pie-uk')
-      .data(pieData)
-
-    let path = d3.selectAll('.pie-uk').selectAll('.path')
-      .data(function(d: any){
-         return pie(d.data[0]) });
-
-    path
-    .transition()
-    .duration(750)
-    .attr("d", arc);*/
-
-/*
-    d3Svg
-      .selectAll('.pie-uk')
-      .data(theData.data)
-      .selectAll('.slice')
-      .data(function(d: any){
-        debugger;
-         return pie([d.data[0], d.data[1]]) })
-      .selectAll('path')
-      .attr('d',  arc);*/
-    
-   
-/*
+    /* this should come back ardadarda
+    pieData.map((v) => {
+      let pieSvg = d3Svg.selectAll('.pie-' + v.country_code);
+      pieSvg.select('.daily-text').text(v.averageDailyReturn); 
+      pieSvg.select('.average-text').text(v.averageReturn); 
+    });*/
+/*  TRANSITIONS
      
 				 path = path.data(pie(frequency)); // update the data
 				  path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
@@ -381,38 +268,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
      
      */ 
   }
-  public drawPieCharts(pieData){
 
-    this.d3Svg.selectAll('.pie-uk').remove();
-    this.d3Svg.selectAll('.pie-us').remove();
-    
-    let d3 = this.d3;
-    let d3Svg = this.d3Svg;
-    let color = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"];
-
-    var arc : any= d3.arc()
-       .innerRadius(20).outerRadius(40);
-
-    var labelArc : any= d3.arc()
-       .innerRadius(55).outerRadius(55);
-
-    var pie = d3.pie()
-      .value(function(d: any){ return d.value });
-          
-    var pies = d3Svg.selectAll('.pie')
-      .data(pieData)
-      .enter()
-      .append<SVGGElement>('g')
-      .attr('class', 'pie')
-      .attr('class', function(d: any){ return 'pie-' + d.country})
-  
-    pies  
-      .append("circle")
-      .attr("cx", 0)
-      .attr("cy", 0)
-      .attr("r", 50)
-      .attr("fill", '#747474')
-      .attr('stroke-opacity', 0);
+  public drawPieChartStaticComponents(pies){
 
     pies  
       .append("circle")
@@ -432,6 +289,21 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
 
     pies
       .append("text")
+      .attr("dx", "0")
+      .attr("dy", "0.5em")
+      .attr("class", "middle-text")
+      .style("text-anchor", "middle")
+      .style("fill", "white");
+
+  }
+
+  public drawPieChartDynamicComponents(pies){
+    
+    let d3 = this.d3;
+    let tooltip = d3.select(".datamaps-hoverover");
+
+    pies
+      .append("text")
       .attr("dy", "0.3em")
       .attr("dx", "6em")
       .attr("class", "average-text")
@@ -439,12 +311,14 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .style("font-size", "11px")
       .style("fill", "white")
       .style("cursor", "pointer")
-      .text(function(d: any) { return d.averageReturn + '%'})
-      .on('mouseover', function(d : any) {  
-          tooltip.html('<div class="hoverinfo"> <strong> Periodic Return </strong> </div>')
-          .style('left', ( d3.event.pageX) + "px")
-          .style('top', ( (d3.event.pageY - 150)) + "px")
-          .style("display", "inline-block");
+      .text(function(d: any) { return d.additionalData.pie_average_return + '%'})
+      .on('mouseover', function(d : any) { 
+          let content = '<div class="hoverinfo"> <strong> Periodic Return </strong> </div>';
+          tooltip.html(content)
+            .style('left', ( d3.event.pageX) + "px")
+            .style('top', ( (d3.event.pageY - 150)) + "px")
+            .style("display", "inline-block");
+
       }).on('mouseout', function(d : any) { 
           tooltip.style('display', 'none');  
         });
@@ -458,94 +332,198 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .style("font-size", "10px")
       .style("fill", "white")
       .style("cursor", "pointer")
-      .text(function(d: any) { return d.averageDailyReturn + '%'})
+      .text(function(d: any) { return d.additionalData.pie_average_daily_return + '%'})
       .on('mouseover', function(d : any) {  
-          tooltip.html('<div class="hoverinfo"> <strong> Average Daily Return </strong> </div>')
-          .style('left', ( d3.event.pageX) + "px")
-          .style('top', ( (d3.event.pageY - 150)) + "px")
-          .style("display", "inline-block");
+          let content = '<div class="hoverinfo"> <strong> Average Daily Return </strong> </div>';
+          tooltip.html(content)
+            .style('left', ( d3.event.pageX) + "px")
+            .style('top', ( (d3.event.pageY - 150)) + "px")
+            .style("display", "inline-block");
       }).on('mouseout', function(d : any) { 
           tooltip.style('display', 'none');  
         });
-    pies
-      .append("text")
-      .attr("dy", "0.5em")
-      .attr("class", "middle-text")
-      .style("text-anchor", "middle")
-      .style("fill", "white");
 
+      pies
+        .append("text") 
+        .attr("dx", "0")
+        .attr("dy", "-3.4em")
+        .style("font-size", "15px")
+        .attr("class", "top-text")
+        .style("text-anchor", "middle")
+        .style("fill", "black")
+        .text((d : any) => {return d.data[0].country});
+  }
+  
+  public drawPieCharts(pieData, pieAttribute){
+    
+    /*
+    pieData.map((v) => {
+      this.d3Svg.selectAll('.pie-' + v.country_code).remove();
+    });*/
+
+    let d3 = this.d3, d3Svg = this.d3Svg;
     let tooltip = d3.select(".datamaps-hoverover");
-              
+    let color = this.color;
+    
+    var arc : any = d3.arc()
+       .innerRadius(20)
+       .outerRadius(40);
+
+    var pie = d3.pie()
+      .value(function(d: any){ return d[pieAttribute] });
+
+    var pies = d3Svg.selectAll('.pie')
+      .data(pieData)
+      .enter()
+      .append<SVGGElement>('g')
+      .attr('class', 'pie')
+      .attr('class', function(d: any){  return 'pie-' + d.data[0].country_code})
+    
+     pies  
+      .append("circle")
+      .attr("cx", 0)
+      .attr("cy", 0)
+      .attr("r", 50)
+      .attr("fill", '#747474')
+      .attr('stroke-opacity', 0)
+      .style('cursor', 'pointer')
+      .on('click', function(d : any) { 
+          updatePieChart(d);
+      });
+      
+    this.drawPieChartStaticComponents(pies);
+    this.drawPieChartDynamicComponents(pies);
+
     pies.selectAll('.slice')
       .data(function(d: any){
-         return pie([d.data[0], d.data[1]]) })
+         return pie(d.data) })
       .enter()
       .append<SVGGElement>('path')
       .attr('d',  arc)
       .style('cursor', 'pointer')
-      .style('fill', (d : any) => color[d.data.id])
+      .style('fill', (d : any) => this.color(d.data.id))
       .on('mouseover', function(d : any) {  
-       tooltip.html('<div class="hoverinfo">' 
-              + '<strong>' 
-              + d.data.name 
-              + '</strong> <br>'
-              + 'Price: <strong>' 
-              + d.value 
-              + '</strong> <br>'
-              + 'Periodic Return: <strong>' 
-              + d.data.averageReturn
-              + '%</strong> <br>'
-              + 'Averate Daily Return: <strong>' 
-              + d.data.averageDailyReturn
-              + '%</strong>'
-              +  '</div>')
-          .style('left', ( d3.event.pageX) + "px")
-          .style('top', ( (d3.event.pageY - 150)) + "px")
-          .style("display", "inline-block");
+        let content = '<div class="hoverinfo">' + '<strong>' + d.data.name + '</strong> <br>'
+                + 'Value <strong>' + d.data[pieAttribute] + '</strong> <br>'
+                + 'Periodic Return: <strong>' + d.data.average_return + '%</strong> <br>'
+                + 'Averate Daily Return: <strong>' + d.data.average_daily_return + '%</strong>' +  '</div>';
+        tooltip.html(content)
+            .style('left', ( d3.event.pageX) + "px")
+            .style('top', ( (d3.event.pageY - 150)) + "px")
+            .style("display", "inline-block");
 
+            d3Svg
+              .selectAll('.pie-' + d.data.country_code)
+              .select(".middle-text" )
+              .text((Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%')
+              .style("font-size", "10px")
+              .style("fill", "white");
+
+            d3.selectAll(".line" )
+                .transition()
+                .duration(300)
+                .style("stroke-width", 1 );
+            d3.selectAll(".line-" + d.data.ticker_symbol)
+              .transition()
+              .duration(300)
+              .style("stroke-width", 3 );
+        })
+        .on('mouseout', function(d : any) { 
+          d3.selectAll(".line" )
+            .transition()
+            .duration(300)
+            .style("stroke-width", 1 );
+          tooltip.style('display', 'none');  
           d3Svg
             .selectAll('.pie-' + d.data.country_code)
             .select(".middle-text" )
-            .text((d.data.averageReturn + '%'))
-            .style("font-size", "10px")
-            .style("fill", "white");
-            
-          d3.selectAll(".line" )
-              .transition()
-              .duration(300)
-              .style("stroke-width", 1 );
-          d3.selectAll(".line-" + d.data.ticker_symbol)
-            .transition()
-            .duration(300)
-            .style("stroke-width", 3 );
-      }).on('mouseout', function(d : any) { 
-          d3.selectAll(".line" )
-          .transition()
-              .duration(300)
-              .style("stroke-width", 1 );
-          tooltip.style('display', 'none');  
-
-          d3Svg
-          .selectAll('.pie-' + d.data.country_code)
-          .select(".middle-text" )
-          .text('');
+            .text('');
+        }).on('click', function(d : any) { 
+          drawDrilledPieChart(d);
         });
-    
 
-    /*
-    pies.selectAll('.slice')
-      .data(function(d: any){
-         return pie([d.data[0], d.data[1]]) })
-      .enter()    
-      .append("text")
-	    .text(function(d: any) { return d.data.name;})
-      .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-	    .style("fill", "black");*/
+      var labelArc : any = d3.arc()
+        .innerRadius(55)
+        .outerRadius(55);
 
+      pies
+        .selectAll('path') 
+        .append("text")
+        .style("text-anchor", "middle")
+        .style("font-size", "25px")
+        .style("fill", "red")
+        .style("cursor", "pointer")
+        .text("HEY2");
+
+
+/*
+       pies
+        .selectAll('path') 
+        .append("text")
+        .text(function(d : any) { 
+          console.log((Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%');
+            console.log("translate(" + labelArc.centroid(d) + ")");
+            return (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%';
+          })
+        .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+        .style("font-size", "25px")
+        .style("text-anchor", "middle")
+        .style("fill", "black");*/
+
+
+      
       this.relocateComponents();
+
+      function updatePieChart(countryData){
+        let pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
+        let currentPie = d3Svg
+          .selectAll('.pie-' + countryData.data[0].country_code)
+          .data([countryData])
+
+        currentPie.selectAll('.slice')
+          .data(function(d: any){
+            debugger;
+            return pie(d.data) })
+          .enter()
+          .append<SVGGElement>('path')
+          .attr('d',  arc)
+          .style('cursor', 'pointer')
+          .style('fill', (d: any) => color(d.data.id));
+      }
+
+      function drawDrilledPieChart(stockData){
+        let color = d3.scaleOrdinal(d3.schemeCategory20b);
+        let tooltip = d3.select(".datamaps-hoverover");
+        
+        var pieNew = d3.pie().value(function(d: any){ return d.value  });
+
+        let currentPie = d3Svg
+          .selectAll('.pie-' + stockData.data.country_code)
+          .data(stockData.data.drilled_pie_data)
+
+        currentPie.selectAll('.slice')
+          .data(function(d: any){
+            return pieNew(stockData.data.drilled_pie_data) })
+          .enter()
+          .append<SVGGElement>('path')
+          .attr('d',  arc)
+          .style('cursor', 'pointer')
+          .style('fill', (d, i: any) => color(i))
+          .on('mouseover', function(d : any) { 
+            let content = '<div class="hoverinfo">' + d.data.name + '<br>' +
+              ' Value: <strong>' + d.data.value + '</strong><br> ' +
+              ' <strong>' + (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100  + '%') + '</strong></div>';
+            tooltip.html(content)
+              .style('left', ( d3.event.pageX) + "px")
+              .style('top', ( (d3.event.pageY - 150)) + "px")
+              .style("display", "inline-block");
+          })
+      }
+      
   }
+
   private initMap(){
-    var map =  new Datamap({
+    var worldMap =  new Datamap({
       element: document.getElementById('map'),
       projection: 'mercator',
       responsive: true,
@@ -560,29 +538,10 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       },data: {
         USA: { fillKey: "exists" },
         GBR: { fillKey: "exists" }
-      },
-       done: function(datamap) {
-          function highlight(country){
-            /*d3.select('body').selectAll(".line" )
-              .transition()
-              .duration(300)
-              .style("stroke-width", 1 );
-           d3.selectAll("body .line-" + country)
-              .transition()
-              .duration(500)
-              .style("stroke-width", 3 );
-            datamap.svg.selectAll("body .line-" + country).style("stroke-width", 3 );*/
-          }
-          
-          datamap.svg.select('.datamaps-subunit.USA')
-              .on('click', function(geography) { highlight("us")});
-          datamap.svg.select('.datamaps-subunit.GBR')
-              .on('click', function(geography) { highlight("uk")});
-                    
-        }
+      }
     });
 
-    map.bubbles([
+    worldMap.bubbles([
       {
         name: 'USA',
         radius: 7,
@@ -607,7 +566,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       }
     ]);
 
-    map.arc([
+    worldMap.arc([
       {
           origin: 'USA',
           destination: {
@@ -637,8 +596,9 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
           }
       }
     ],  {strokeWidth: 1, arcSharpness: 1.4});
-      return map;
+      return worldMap;
     }
+
 
   ngOnChanges(changes: { [propKey: string]: SimpleChange }) {
     
@@ -650,7 +610,12 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     
     if (startDate && ( !changes['startDate'] ||  !changes['startDate'].isFirstChange())
      && endDate && ( !changes['endDate'] ||  !changes['endDate'].isFirstChange())){
-      this.changeFunction(startDate, endDate);
+      this.updateView(startDate, endDate);
     }
   }
+
+  private formatNumber = function(value){
+    return  (Math.round(value * 100 ) / 100 );
+  }
+
 }
