@@ -42,6 +42,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
   private processedStocks : any;
   private filteredStocks : any;
   private color : any;
+  private pieAttribute: any;
   
   constructor(element: ElementRef, private ngZone: NgZone, d3Service: D3Service) {
     this.d3 = d3Service.getD3();
@@ -62,7 +63,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let d3G: Selection<SVGGElement, any, null, undefined>;
     let worldMap : any = this.initMap();
     let pieData : any;   
-    let pieAttribute = "main_pie_data";
+    let pieAttribute = this.pieAttribute =  "main_pie_data";
     this.color = d3.scaleOrdinal(d3.schemeCategory10);
     
      // Initialize the canvas and draw the pie charts
@@ -182,63 +183,10 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     return groupedData;
   }
 
-  private drawPieChartDynamicComponents(pies){
-    
-    let d3 = this.d3;
-    let tooltip = d3.select(".datamaps-hoverover");
-
-    pies
-      .append("text")
-      .attr("dy", "0.3em")
-      .attr("dx", "6em")
-      .attr("class", "average-text")
-      .style("text-anchor", "middle")
-      .style("font-size", "11px")
-      .style("fill", "white")
-      .style("cursor", "pointer")
-      .text(function(d: any) { return d.additionalData.pie_average_return + '%'})
-      .on('mouseover', function(d : any) { 
-          let content = '<div class="hoverinfo"> <strong> Periodic Return </strong> </div>';
-          tooltip.html(content)
-            .style('left', ( d3.event.pageX) + "px")
-            .style('top', ( (d3.event.pageY - 150)) + "px")
-            .style("display", "inline-block");
-
-      }).on('mouseout', function(d : any) { 
-          tooltip.style('display', 'none');  
-        });
-
-    pies
-      .append("text")
-      .attr("dy", "4em")
-      .attr("dx", "5.2em")
-      .attr("class", "daily-text")
-      .style("text-anchor", "middle")
-      .style("font-size", "10px")
-      .style("fill", "white")
-      .style("cursor", "pointer")
-      .text(function(d: any) { return d.additionalData.pie_average_daily_return + '%'})
-      .on('mouseover', function(d : any) {  
-          let content = '<div class="hoverinfo"> <strong> Average Daily Return </strong> </div>';
-          tooltip.html(content)
-            .style('left', ( d3.event.pageX) + "px")
-            .style('top', ( (d3.event.pageY - 150)) + "px")
-            .style("display", "inline-block");
-      }).on('mouseout', function(d : any) { 
-          tooltip.style('display', 'none');  
-        });
-
-      pies
-        .append("text") 
-        .attr("dx", "0")
-        .attr("dy", "-3.4em")
-        .style("font-size", "15px")
-        .attr("class", "top-text")
-        .style("text-anchor", "middle")
-        .style("fill", "black")
-        .text((d : any) => {return d.data[0].country});
-  }
-
+  /*
+    DRAWING FUNCTIONS
+  */
+  
   private bindSliceEvents(slices, pieAttribute){
     let d3 = this.d3;
     let d3Svg = this.d3Svg;
@@ -288,7 +236,8 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     let d3 = this.d3, d3Svg = this.d3Svg;
     let tooltip = d3.select(".datamaps-hoverover");
     let color = this.color;
-    
+    let tempSelf = this;
+
     var arc : any = d3.arc().innerRadius(20).outerRadius(40);
     var pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
 
@@ -309,11 +258,10 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .attr('stroke-opacity', 0)
       .style('cursor', 'pointer')
       .on('click', function(d : any) { 
-          updatePieChart(d);
+          tempSelf.updatePieChart(d, pieAttribute, tempSelf);
       });
-      
+
     this.drawPieChartStaticComponents(pies);
-    this.drawPieChartDynamicComponents(pies);
     
     let slices = pies.selectAll('.slice')
       .data(function(d: any){
@@ -324,100 +272,121 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .style('cursor', 'pointer')
       .style('fill', (d : any) => this.color(d.data.id));
       
-      this.bindSliceEvents(slices, pieAttribute); 
-      slices.on('click', function(d : any) { 
-        drawDrilledPieChart(d);
+    this.bindSliceEvents(slices, pieAttribute); 
+    this.updatePieTexts(pieData);
+
+    slices.on('click', function(d : any) { 
+      tempSelf.drawDrilledPieChart(d);
+    });
+
+    // ardadarda label arcs should be added  
+    var labelArc : any = d3.arc()
+      .innerRadius(55)
+      .outerRadius(55);
+      
+    pies
+      .selectAll('path') 
+      .append("text")
+      .text(function(d : any) { 
+        return (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%';
+      })
+      .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
+      .style("font-size", "25px")
+      .style("text-anchor", "middle")
+      .style("fill", "black");
+      
+      // Locate pie charts
+      d3Svg.select('.pie-US').attr("transform", ('translate(265.88082345209335,239.93560787450036)'));
+      d3Svg.select('.pie-UK').attr("transform", ('translate(340.45715198133905,64.19898697182578) '));  
+     //d3Svg.select('.pie-JP').attr("transform", ('translate(500,300) '));   // tochange
+  }
+
+  public updatePieTexts(pieData){
+    let d3Svg = this.d3Svg;
+    pieData.map((v) => {
+      let pieSvg = d3Svg.selectAll('.pie-' + v.data[0].country_code);
+      pieSvg.select('.daily-text').text(v.additionalData.pie_average_daily_return); 
+      pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
+      pieSvg.select('.top-text').text(v.data[0].country_code); 
+    });
+
+  }
+  // FUNCTION FOR RETURNING TO THE ORIGINAL PIE CHART
+  public updatePieChart(countryData, pieAttribute, tempSelf){
+    let d3 = tempSelf.d3;
+    let d3Svg = tempSelf.d3Svg;
+    let arc : any = d3.arc().innerRadius(20).outerRadius(40);
+    let color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    let pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
+    let currentPie = d3Svg
+      .selectAll('.pie-' + countryData.data[0].country_code)
+      .data([countryData])
+    
+    let slices = currentPie
+      .selectAll('.slice')
+      .data(function(d: any){
+        return pie(d.data) })
+      .enter()
+      .append('path')
+      .attr('d',  arc)
+      .style('cursor', 'pointer')
+      .style('fill', (d: any) => color(d.data.id));
+
+    tempSelf.bindSliceEvents(slices, pieAttribute);  
+    
+    slices.on('click', function(d : any) { 
+      tempSelf.drawDrilledPieChart(d);
+    });
+
+      [countryData].map((v) => {
+        let pieSvg = d3Svg.selectAll('.pie-' + v.data[0].country_code);
+        pieSvg.select('.daily-text').text(v.additionalData.pie_average_daily_return); 
+        pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
+        pieSvg.select('.top-text').text(v.data[0].country_code); 
+      }); 
+  }
+
+  // FUNCTION FOR PIE CHART DRILL
+  public drawDrilledPieChart(stockData){
+    let d3 = this.d3;
+    let d3Svg = this.d3Svg;
+    let arc : any = d3.arc().innerRadius(20).outerRadius(40);
+    let color = d3.scaleOrdinal(d3.schemeCategory20b);
+    let tooltip = d3.select(".datamaps-hoverover");
+    
+    var pieNew = d3.pie().value(function(d: any){ return d.value  });
+
+    let currentPie = d3Svg
+      .selectAll('.pie-' + stockData.data.country_code)
+      .data(stockData.data.drilled_pie_data)
+
+    currentPie.selectAll('.slice')
+      .data(function(d: any){
+        return pieNew(stockData.data.drilled_pie_data) })
+      .enter()
+      .append<SVGGElement>('path')
+      .attr('d',  arc)
+      .style('cursor', 'pointer')
+      .style('fill', (d, i: any) => color(i))
+      .on('mouseover', function(d : any) { 
+        let content = '<div class="hoverinfo">' + d.data.name + '<br>' +
+          ' Value: <strong>' + d.data.value + '</strong><br> ' +
+          ' <strong>' + (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100  + '%') + '</strong></div>';
+        tooltip.html(content)
+          .style('left', ( d3.event.pageX) + "px")
+          .style('top', ( (d3.event.pageY - 150)) + "px")
+          .style("display", "inline-block");
       });
 
-      // ardadarda label arcs should be added  
-      var labelArc : any = d3.arc()
-        .innerRadius(55)
-        .outerRadius(55);
-
-      pies
-        .selectAll('path') 
-        .append("text")
-        .text(function(d : any) { 
-          return (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100 ) + '%';
-        })
-        .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-        .style("font-size", "25px")
-        .style("text-anchor", "middle")
-        .style("fill", "black");
-        
-        // Locate pie charts
-        d3Svg.select('.pie-US').attr("transform", ('translate(265.88082345209335,239.93560787450036)'));
-        d3Svg.select('.pie-UK').attr("transform", ('translate(340.45715198133905,64.19898697182578) '));  
-        // d3Svg.select('.pie-JP').attr("transform", ('translate(500,300) '));  tochange
-
-
-      function updatePieChart(countryData){
-
-        let pie = d3.pie().value(function(d: any){ return d[pieAttribute] });
-        let currentPie = d3Svg
-          .selectAll('.pie-' + countryData.data[0].country_code)
-          .data([countryData])
-          
-        let slices = currentPie.selectAll('.slice')
-          .data(function(d: any){
-            return pie(d.data) })
-          .enter()
-          .append<SVGGElement>('path')
-          .attr('d',  arc)
-          .style('cursor', 'pointer')
-          .style('fill', (d: any) => color(d.data.id));
-   
-          slices.on('click', function(d : any) { 
-            drawDrilledPieChart(d);
-          });
-
-
-          
-         [countryData].map((v) => {
-          let pieSvg = d3Svg.selectAll('.pie-' + v.data[0].country_code);
-          pieSvg.select('.daily-text').text(v.additionalData.pie_average_daily_return); 
-          pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
-          pieSvg.select('.top-text').text(v.data[0].country_code); 
-        });  
-      }
-
-      function drawDrilledPieChart(stockData){
-        let color = d3.scaleOrdinal(d3.schemeCategory20b);
-        let tooltip = d3.select(".datamaps-hoverover");
-        
-        var pieNew = d3.pie().value(function(d: any){ return d.value  });
-
-        let currentPie = d3Svg
-          .selectAll('.pie-' + stockData.data.country_code)
-          .data(stockData.data.drilled_pie_data)
-
-        currentPie.selectAll('.slice')
-          .data(function(d: any){
-            return pieNew(stockData.data.drilled_pie_data) })
-          .enter()
-          .append<SVGGElement>('path')
-          .attr('d',  arc)
-          .style('cursor', 'pointer')
-          .style('fill', (d, i: any) => color(i))
-          .on('mouseover', function(d : any) { 
-            let content = '<div class="hoverinfo">' + d.data.name + '<br>' +
-              ' Value: <strong>' + d.data.value + '</strong><br> ' +
-              ' <strong>' + (Math.round(((d.endAngle - d.startAngle)/(2*Math.PI)*100) * 100 ) / 100  + '%') + '</strong></div>';
-            tooltip.html(content)
-              .style('left', ( d3.event.pageX) + "px")
-              .style('top', ( (d3.event.pageY - 150)) + "px")
-              .style("display", "inline-block");
-          });
-
-          [stockData].map((v) => {
-            let pieSvg = d3Svg.selectAll('.pie-' + v.data.country_code);
-            pieSvg.select('.daily-text').text(v.data.average_daily_return); 
-            pieSvg.select('.average-text').text(v.data.average_return); 
-            pieSvg.select('.top-text').text(v.data.name); 
-          }); 
-      }
-      
+      [stockData].map((v) => {
+        let pieSvg = d3Svg.selectAll('.pie-' + v.data.country_code);
+        pieSvg.select('.daily-text').text(v.data.average_daily_return); 
+        pieSvg.select('.average-text').text(v.data.average_return); 
+        pieSvg.select('.top-text').text(v.data.name); 
+      }); 
   }
+  
   private drawPieChartStaticComponents(pies){
 
     pies  
@@ -440,10 +409,39 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
       .append("text")
       .attr("dx", "0")
       .attr("dy", "0.5em")
-      .attr("class", "middle-text")
+      .attr("class", "middle-text") // class
       .style("text-anchor", "middle")
       .style("fill", "white");
 
+    pies
+      .append("text")
+      .attr("dy", "0.3em")
+      .attr("dx", "6em")
+      .attr("class", "average-text") // class
+      .style("text-anchor", "middle")
+      .style("font-size", "11px")
+      .style("fill", "white")
+      .style("cursor", "pointer");
+
+    pies
+      .append("text")
+      .attr("dy", "4em")
+      .attr("dx", "5.2em")
+      .attr("class", "daily-text") // class
+      .style("text-anchor", "middle")
+      .style("font-size", "10px")
+      .style("fill", "white")
+      .style("cursor", "pointer");
+
+    pies
+      .append("text") 
+      .attr("dx", "0")
+      .attr("dy", "-3.4em")
+      .style("font-size", "15px")
+      .attr("class", "top-text") // class
+      .style("text-anchor", "middle")
+      .style("fill", "black")
+      .text((d) => {return d.data[0].country}); 
   }
 
   /*
@@ -605,13 +603,13 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
     var arc : any = d3.arc().innerRadius(20).outerRadius(40);
     var pie = d3.pie().value(function(d: any){ return d[this.pieAttribute] });
 
+    /*
     pieData.map((v) => {
-      let pieSvg = d3Svg.selectAll('.pie-' + v.data[0].country_code);
-      pieSvg.select('.daily-text').text(v.additionalData.pie_average_daily_return); 
-      pieSvg.select('.average-text').text(v.additionalData.pie_average_return); 
-      pieSvg.select('.top-text').text(v.data[0].country_code); 
+      console.log(v.data)
+      this.updatePieChart(v.data, this.pieAttribute, this);
     });
-    
+  
+
     let pies = d3.pie().value(function(d: any){ return d[this.pieAttribute] });
       let currentPie = d3Svg
         .selectAll('.pies')
@@ -625,6 +623,7 @@ export class DatamapComponent implements OnInit, OnChanges, OnDestroy {
         .attr('d',  arc)
         .style('cursor', 'pointer')
         .style('fill', (d: any) => this.color(d.data.id));
+          */
   
   }
 
